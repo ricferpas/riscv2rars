@@ -79,6 +79,64 @@ object transforms {
       case s ⇒ Some(s)
     })
   }
+
+  def renameRegisters(prg: Program) = {
+    def renameReg(reg: String) = try (Integer.parseInt(reg) match {
+      case 0  ⇒ "0"
+      case 1  ⇒ "at"
+      case 2  ⇒ "v0"
+      case 3  ⇒ "v1"
+      case 4  ⇒ "a0"
+      case 5  ⇒ "a1"
+      case 6  ⇒ "a2"
+      case 7  ⇒ "a3"
+      case 8  ⇒ "t0"
+      case 9  ⇒ "t1"
+      case 10 ⇒ "t2"
+      case 11 ⇒ "t3"
+      case 12 ⇒ "t4"
+      case 13 ⇒ "t5"
+      case 14 ⇒ "t6"
+      case 15 ⇒ "t7"
+      case 16 ⇒ "s0"
+      case 17 ⇒ "s1"
+      case 18 ⇒ "s2"
+      case 19 ⇒ "s3"
+      case 20 ⇒ "s4"
+      case 21 ⇒ "s5"
+      case 22 ⇒ "s6"
+      case 23 ⇒ "s7"
+      case 24 ⇒ "t8"
+      case 25 ⇒ "t9"
+      case 26 ⇒ "k0"
+      case 27 ⇒ "k1"
+      case 28 ⇒ "gp"
+      case 29 ⇒ "sp"
+      case 30 ⇒ "fp"
+      case 31 ⇒ "ra"
+      case _  ⇒ reg
+    }) catch {
+      case e: NumberFormatException ⇒ reg
+    }
+    def rename(operand: Operand): Operand = operand match {
+      case Register(name)                   ⇒ Register(renameReg(name))
+      case o @ LabelRef(_)                  ⇒ o
+      case IndexedAddress(offset, base)     ⇒ IndexedAddress(rename(offset), rename(base))
+      case AssemblerFunction(name, operand) ⇒ AssemblerFunction(name, rename(operand))
+      case l: Literal                       ⇒ l
+      case Parenthesis(op)                  ⇒ Parenthesis(rename(op))
+      case ArithExpression(oper, a, b)      ⇒ ArithExpression(oper, rename(a), rename(b))
+    }
+    Program(prg.statements map {
+      case Directive(d, operands)    ⇒ Directive(d, operands map rename)
+      case Instruction(i, operands)  ⇒ Instruction(i, operands map rename)
+      case s @ Label(_)              ⇒ s
+      case s @ LabelDefinition(_, _) ⇒ s
+      case s @ Comment(_, _)         ⇒ s
+    })
+  }
+
+  def groupSections(prg: Program) = prg
 }
 
 class Test1 extends App {
@@ -98,7 +156,8 @@ class Test1 extends App {
     ("removeDirectives", removeDirectives(_)),
     ("removeDelaySlot", removeDelaySlot),
     ("simplifyData", simplifyData),
-    ("removeUnusedLabels", removeUnusedLabels)).zipWithIndex.foldLeft(p0) {
+    ("removeUnusedLabels", removeUnusedLabels),
+    ("renameRegisters", renameRegisters)).zipWithIndex.foldLeft(p0) {
       case (acc, ((name, fn), idx)) ⇒ {
         val q = fn(acc)
         Console.withOut(new FileOutputStream(outputFilename(s"${idx + 1}-$name"))) { println(printer.format(q)) }
