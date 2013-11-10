@@ -138,19 +138,22 @@ object transforms {
   }
 
   def groupSections(prg: Program) = {
-    var sections = Map.empty[Directive, Buffer[Statement]].withDefault(_ ⇒ Buffer.empty)
+    var sections = Map.empty[Directive, Buffer[Statement]]
     var current = Directive("text", Seq())
-    prg.statements foreach {
-      case d @ Directive(s, rest) if (Set("data", "text", "bss", "kdata", "ktext", "kbss", "sdata", "sbss") contains s) ⇒ current = d
-      case d @ Directive("section", _) ⇒ current = d
-      case stm ⇒ sections = sections + (current -> (sections(current) :+ stm))
+    def setCurrent(d: Directive) {
+      current = d
+      if (!(sections contains current)) sections = sections + (current -> Buffer())
     }
-    println(sections)
-    println(sections.size)
-    val statements = (sections flatMap {
-      case (d, z) if z.size > 0 ⇒ Seq(d) ++ z
+    setCurrent(current)
+    prg.statements foreach {
+      case d @ Directive(s, rest) if (Set("data", "text", "bss", "kdata", "ktext", "kbss", "sdata", "sbss") contains s) ⇒ setCurrent(d)
+      case d @ Directive("section", _) ⇒ setCurrent(d)
+      case stm ⇒ sections(current) += stm
+    }
+    val statements = sections flatMap {
+      case (d, z) if z.size > 0 ⇒ d +: z
       case (d, z)               ⇒ Seq()
-    }).toSeq
-    Program(statements)
+    }
+    Program(statements.toSeq)
   }
 }
