@@ -22,7 +22,8 @@ class Test1 extends App {
     ("simplifyData", simplifyData),
     ("removeUnusedLabels", removeUnusedLabels),
     ("renameRegisters", renameRegisters),
-    ("groupSections", groupSections))
+    ("groupSections", groupSections),
+    ("removeAlignFromText", removeAlignFromText))
     .zipWithIndex.foldLeft(p0) {
       case (acc, ((name, fn), idx)) ⇒ {
         val q = fn(acc)

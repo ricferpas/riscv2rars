@@ -163,4 +163,23 @@ object transforms {
     }
     Program(statements)
   }
+
+  def removeAlignFromText(prg: Program) = {
+    val textDirective = Directive("text", Seq())
+    var current = textDirective
+    def setCurrent(d: Directive) {
+      current = d
+    }
+    setCurrent(current)
+    val statements = prg.statements flatMap {
+      case d @ Directive(s, rest) if (Set("data", "text", "bss", "kdata", "ktext", "kbss", "sdata", "sbss") contains s) ⇒
+        setCurrent(d); Some(d)
+      case d @ Directive("section", _) ⇒
+        setCurrent(d); Some(d)
+      case d @ Directive("align", _) ⇒
+        if (current == textDirective) None else Some(d)
+      case stm ⇒ Some(stm)
+    }
+    Program(statements)
+  }
 }
