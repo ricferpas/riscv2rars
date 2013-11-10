@@ -53,7 +53,7 @@ object transforms {
             case IntegerConst(align) :: _ ⇒ Some(Directive("align", Seq(IntegerConst(align match { case 1 ⇒ 0 case 2 ⇒ 1 case 3 ⇒ 2 case 4 ⇒ 2 case _ ⇒ 3 }))))
             case _                        ⇒ None
           }) ++ Seq(Directive("space", Seq(size)))
-        case Directive("section", LabelRef(s) :: _) if s == ".rodata" ⇒ Some(Directive("data", Seq()))
+        case Directive("section", LabelRef(s) :: _) if s.startsWith(".rodata") ⇒ Some(Directive("data", Seq()))
         case s ⇒ Some(s)
       }
     })
