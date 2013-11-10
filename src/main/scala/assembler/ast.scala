@@ -33,7 +33,7 @@ object ast {
   case class Comment(comment: String, attached: Boolean = false) extends Statement
 
   sealed abstract class Operand
-  case class Register(name: String) extends Operand //{ println(s"REGISTRO $name")}
+  case class Register(name: String) extends Operand
   case class LabelRef(name: String) extends Operand
   case class IndexedAddress(offset: Operand, base: Operand) extends Operand
   case class AssemblerFunction(name: String, operand: Operand) extends Operand
@@ -43,7 +43,7 @@ object ast {
   case class FloatConst(value: Double) extends Literal
   case class StringConst(value: String) extends Literal
   case class CharConst(value: Char) extends Literal
-  
+
   sealed abstract class Expression extends Operand
   case class ArithExpression(operation: String, a: Operand, b: Operand) extends Expression
   case class Parenthesis(expressions: Operand) extends Expression
