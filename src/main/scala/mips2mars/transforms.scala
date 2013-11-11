@@ -187,20 +187,23 @@ object transforms {
     Program(statements)
   }
 
-  def addPseudoinstructions(prg: Program) = {
+  def addLuiPseudoinstructions(prg: Program) = {
     val it = prg.statements.iterator.buffered
     val ret = Buffer[Statement]()
+    /* El siguiente mapa es necesario porque a veces se reusa un registro después de cargar en el la parte alta de una constante. Además, el  lui y la segunda instrucción pueden no estar contiguos.*/
+    /* El algoritmo no es totalmente correcto y puede hacer subtituciones erróneas, pero es poco probable que pase con el código generado por llvm */
+    var luiRegs = Map.empty[String, Operand]
     while (it.hasNext) {
       val stmt = it.next
       stmt match {
-        case Instruction("lui", Seq(Register("at"), AssemblerFunction("hi", LabelRef(label)))) ⇒ {
-          it.head match {
-            case Instruction("addiu", Seq(Register(regDst), Register("at"), AssemblerFunction("lo", LabelRef(l)))) if l == label ⇒ {
-              ret += Instruction("la", Seq(Register(regDst), LabelRef(label)))
-              it.next
-            }
-            case _ ⇒ ret += stmt
-          }
+        case Instruction("lui", Seq(Register(regTmp), AssemblerFunction("hi", imm @ LabelRef(label)))) ⇒ {
+          luiRegs = luiRegs + (regTmp -> imm) // no se añade el lui, se asume que se usará sólo para instrucciones que se substituirán luego (probablemente la próxima)
+        }
+        case Instruction("addiu", Seq(Register(regDst), Register(regTmp), AssemblerFunction("lo", imm @ LabelRef(label)))) if luiRegs.contains(regTmp) && luiRegs(regTmp) == imm ⇒ {
+          ret += Instruction("la", Seq(Register(regDst), imm))
+        }
+        case Instruction(inst, Seq(Register(regOther), IndexedAddress(AssemblerFunction("lo", imm @ LabelRef(label)), Register(regTmp)))) if luiRegs.contains(regTmp) && luiRegs(regTmp) == imm ⇒ {
+          ret += Instruction(inst, Seq(Register(regOther), imm))
         }
         case _ ⇒ ret += stmt
       }
