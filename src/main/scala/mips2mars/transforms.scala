@@ -182,4 +182,26 @@ object transforms {
     }
     Program(statements)
   }
+
+  def addPseudoinstructions(prg: Program) = {
+    val it = prg.statements.iterator.buffered
+    val ret = Buffer[Statement]()
+    while (it.hasNext) {
+      val stmt = it.next
+      stmt match {
+        case Instruction("lui", Seq(Register("at"), AssemblerFunction("hi", LabelRef(label)))) ⇒ {
+          println(s"$stmt\n${it.head}")
+          it.head match {
+            case Instruction("addiu", Seq(Register(regDst), Register("at"), AssemblerFunction("lo", LabelRef(l)))) if l == label ⇒ {
+              ret += Instruction("la", Seq(Register(regDst), LabelRef(label)))
+              it.next
+            }
+            case _ ⇒ ret += stmt
+          }
+        }
+        case _ ⇒ ret += stmt
+      }
+    }
+    Program(ret)
+  }
 }
