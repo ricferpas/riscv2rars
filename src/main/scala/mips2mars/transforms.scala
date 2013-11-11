@@ -7,6 +7,16 @@ import ast._
 object transforms {
   type Transform = Program ⇒ Program
 
+  def mapOperands(prg: Program)(fn: Operand ⇒ Operand) = {
+    Program(prg.statements map {
+      case Directive(d, operands)    ⇒ Directive(d, operands map fn)
+      case Instruction(i, operands)  ⇒ Instruction(i, operands map fn)
+      case s @ Label(_)              ⇒ s
+      case s @ LabelDefinition(_, _) ⇒ s
+      case s @ Comment(_, _)         ⇒ s
+    })
+  }
+
   def removeDelaySlot(prg: Program) = {
     val it = prg.statements.iterator
     val ret = Buffer[Statement]()
@@ -129,13 +139,7 @@ object transforms {
       case Parenthesis(op)                  ⇒ Parenthesis(rename(op))
       case ArithExpression(oper, a, b)      ⇒ ArithExpression(oper, rename(a), rename(b))
     }
-    Program(prg.statements map {
-      case Directive(d, operands)    ⇒ Directive(d, operands map rename)
-      case Instruction(i, operands)  ⇒ Instruction(i, operands map rename)
-      case s @ Label(_)              ⇒ s
-      case s @ LabelDefinition(_, _) ⇒ s
-      case s @ Comment(_, _)         ⇒ s
-    })
+    mapOperands(prg)(rename)
   }
 
   def groupSections(prg: Program) = {
@@ -190,7 +194,6 @@ object transforms {
       val stmt = it.next
       stmt match {
         case Instruction("lui", Seq(Register("at"), AssemblerFunction("hi", LabelRef(label)))) ⇒ {
-          println(s"$stmt\n${it.head}")
           it.head match {
             case Instruction("addiu", Seq(Register(regDst), Register("at"), AssemblerFunction("lo", LabelRef(l)))) if l == label ⇒ {
               ret += Instruction("la", Seq(Register(regDst), LabelRef(label)))
@@ -203,5 +206,20 @@ object transforms {
       }
     }
     Program(ret)
+  }
+
+  def simplyfyOperands(prg: Program) = {
+    def simplyfy(operand: Operand): Operand = operand match {
+      case Register(_)                            ⇒ operand
+      case LabelRef(_)                            ⇒ operand
+      case IndexedAddress(offset, Register("gp")) ⇒ simplyfy(offset)
+      case IndexedAddress(offset, base)           ⇒ IndexedAddress(simplyfy(offset), simplyfy(base))
+      case AssemblerFunction("gp_rel", operand)   ⇒ simplyfy(operand)
+      case AssemblerFunction(name, operand)       ⇒ AssemblerFunction(name, simplyfy(operand))
+      case l: Literal                             ⇒ operand
+      case Parenthesis(op)                        ⇒ Parenthesis(simplyfy(op))
+      case ArithExpression(oper, a, b)            ⇒ ArithExpression(oper, simplyfy(a), simplyfy(b))
+    }
+    mapOperands(prg)(simplyfy)
   }
 }

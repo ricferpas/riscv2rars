@@ -24,6 +24,7 @@ class Test1 extends App {
     ("renameRegisters", renameRegisters),
     ("groupSections", groupSections),
     ("removeAlignFromText", removeAlignFromText),
+    ("simplyfyOperands", simplyfyOperands),
     ("addPseudoinstructions", addPseudoinstructions))
     .zipWithIndex.foldLeft(p0) {
       case (acc, ((name, fn), idx)) ⇒ {
