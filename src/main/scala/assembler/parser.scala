@@ -82,8 +82,11 @@ object parser extends RegexParsers {
   def statement: Parser[Statement] =
     directive | instruction
 
+  def directiveIdentifier: Parser[String] =
+    """(\p{javaJavaIdentifierPart}|[.@])(\p{javaJavaIdentifierPart}|[.@])*""".r
+
   def directive =
-    "." ~ identifier ~ repsep(operand, opt(",")) ^^ { case _ ~ name ~ operands ⇒ Directive(name, operands) }
+    "." ~ directiveIdentifier ~ repsep(operand, opt(",")) ^^ { case _ ~ name ~ operands ⇒ Directive(name, operands) }
 
   def instruction =
     (identifier ~ repsep(operand, ",")) ^^ { case opcode ~ operands ⇒ Instruction(opcode, operands) }
