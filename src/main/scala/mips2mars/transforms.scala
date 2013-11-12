@@ -17,6 +17,14 @@ object transforms {
     })
   }
 
+  def foreachOperand(prg: Program)(fn: Operand ⇒ Unit) = {
+    prg.statements foreach {
+      case Directive(_, ops)   ⇒ ops foreach fn
+      case Instruction(_, ops) ⇒ ops foreach fn
+      case s                   ⇒
+    }
+  }
+
   def removeDelaySlot(prg: Program) = {
     val it = prg.statements.iterator
     val ret = Buffer[Statement]()
@@ -80,11 +88,7 @@ object transforms {
       case Register(_)               ⇒
       case _: Literal                ⇒
     }
-    prg.statements foreach {
-      case Directive(_, ops)   ⇒ ops foreach examine
-      case Instruction(_, ops) ⇒ ops foreach examine
-      case s                   ⇒
-    }
+    foreachOperand(prg)(examine)
     Program(prg.statements flatMap {
       case Label(l) if !(usedLabels contains l) ⇒ None
       case LabelDefinition(l, _) if !(usedLabels contains l) ⇒ None
@@ -243,11 +247,40 @@ object transforms {
     def simplyfy(directive: Directive): Directive = directive match {
       case Directive("4byte", ops) ⇒ Directive("word", ops map removeParenthesis)
       case Directive("asciz", ops) ⇒ Directive("asciiz", ops)
-      case d                       ⇒ println(d); d
+      case d                       ⇒ d
     }
     Program(prg.statements map {
       case s @ Directive(_, _) ⇒ simplyfy(s)
       case s                   ⇒ s
     })
+  }
+
+  def avoidRegisterAt(prg: Program) = {
+    var usedRegisters = Set.empty[String]
+    def examine(operand: Operand): Unit = operand match {
+      case LabelRef(l)               ⇒
+      case IndexedAddress(of, ba)    ⇒ { examine(of); examine(ba) }
+      case AssemblerFunction(_, op)  ⇒ examine(op)
+      case ArithExpression(op, a, b) ⇒ { examine(a); examine(b) }
+      case Parenthesis(e)            ⇒ examine(e)
+      case Register(r)               ⇒ usedRegisters += r
+      case _: Literal                ⇒
+    }
+    foreachOperand(prg)(examine)
+    Seq("t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t1", "t2", "gp", "fp", "k0", "k1").find(!usedRegisters(_)) match {
+      case Some(alternative) ⇒
+        def rename(operand: Operand): Operand = operand match {
+          case Register("at")                   ⇒ Register(alternative)
+          case Register(_)                      ⇒ operand
+          case LabelRef(_)                      ⇒ operand
+          case IndexedAddress(offset, base)     ⇒ IndexedAddress(rename(offset), rename(base))
+          case AssemblerFunction(name, operand) ⇒ AssemblerFunction(name, rename(operand))
+          case l: Literal                       ⇒ operand
+          case Parenthesis(op)                  ⇒ Parenthesis(rename(op))
+          case ArithExpression(oper, a, b)      ⇒ ArithExpression(oper, rename(a), rename(b))
+        }
+        mapOperands(prg)(rename)
+      case None ⇒ prg
+    }
   }
 }

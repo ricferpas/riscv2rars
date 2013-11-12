@@ -26,7 +26,8 @@ class Test1 extends App {
     ("removeAlignFromText", removeAlignFromText),
     ("simplyfyOperands", simplyfyOperands),
     ("simplyfyDirectives", simplyfyDirectives),
-    ("addLuiPseudoinstructions", addLuiPseudoinstructions))
+    ("addLuiPseudoinstructions", addLuiPseudoinstructions),
+    ("avoidRegisterAt", avoidRegisterAt))
     .zipWithIndex.foldLeft(p0) {
       case (acc, ((name, fn), idx)) ⇒ {
         val q = fn(acc)
