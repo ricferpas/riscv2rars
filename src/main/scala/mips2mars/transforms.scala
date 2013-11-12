@@ -234,4 +234,20 @@ object transforms {
     }
     mapOperands(prg)(simplyfy)
   }
+
+  def simplyfyDirectives(prg: Program) = {
+    def removeParenthesis(o: Operand) = o match {
+      case Parenthesis(o) ⇒ o
+      case o              ⇒ o
+    }
+    def simplyfy(directive: Directive): Directive = directive match {
+      case Directive("4byte", ops) ⇒ Directive("word", ops map removeParenthesis)
+      case Directive("asciz", ops) ⇒ Directive("asciiz", ops)
+      case d                       ⇒ println(d); d
+    }
+    Program(prg.statements map {
+      case s @ Directive(_, _) ⇒ simplyfy(s)
+      case s                   ⇒ s
+    })
+  }
 }
