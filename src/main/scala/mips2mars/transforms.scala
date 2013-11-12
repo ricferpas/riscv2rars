@@ -196,14 +196,23 @@ object transforms {
     while (it.hasNext) {
       val stmt = it.next
       stmt match {
-        case Instruction("lui", Seq(Register(regTmp), AssemblerFunction("hi", imm @ LabelRef(label)))) ⇒ {
-          luiRegs = luiRegs + (regTmp -> imm) // no se añade el lui, se asume que se usará sólo para instrucciones que se substituirán luego (probablemente la próxima)
+        case Instruction("lui", Seq(Register(regLui), AssemblerFunction("hi", imm @ LabelRef(label)))) ⇒ {
+          luiRegs = luiRegs + (regLui -> imm) // no se añade el lui, se asume que se usará sólo para instrucciones que se substituirán luego (probablemente la próxima)
         }
-        case Instruction("addiu", Seq(Register(regDst), Register(regTmp), AssemblerFunction("lo", imm @ LabelRef(label)))) if luiRegs.contains(regTmp) && luiRegs(regTmp) == imm ⇒ {
+        case Instruction("addiu", Seq(Register(regDst), Register(regLui), AssemblerFunction("lo", imm @ LabelRef(label)))) if luiRegs.contains(regLui) && luiRegs(regLui) == imm ⇒ {
           ret += Instruction("la", Seq(Register(regDst), imm))
         }
-        case Instruction(inst, Seq(Register(regOther), IndexedAddress(AssemblerFunction("lo", imm @ LabelRef(label)), Register(regTmp)))) if luiRegs.contains(regTmp) && luiRegs(regTmp) == imm ⇒ {
+        case Instruction(inst, Seq(Register(regOther), IndexedAddress(AssemblerFunction("lo", imm @ LabelRef(label)), Register(regLui)))) if luiRegs.contains(regLui) && luiRegs(regLui) == imm ⇒ {
           ret += Instruction(inst, Seq(Register(regOther), imm))
+        }
+        case Instruction("addu", Seq(Register(regTmp), Register(regTmp2), Register(regLui))) if regTmp == regTmp2 && luiRegs.contains(regLui) && it.hasNext ⇒ {
+          it.head match {
+            case Instruction(inst, Seq(Register(regOther), IndexedAddress(AssemblerFunction("lo", imm @ LabelRef(label)), Register(regTmp3)))) if regTmp3 == regTmp && luiRegs.contains(regLui) && luiRegs(regLui) == imm ⇒ {
+              ret += Instruction(inst, Seq(Register(regOther), IndexedAddress(imm, Register(regTmp))))
+              it.next // consume head
+            }
+            case _ ⇒ ret += stmt
+          }
         }
         case _ ⇒ ret += stmt
       }
