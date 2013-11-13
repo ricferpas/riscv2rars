@@ -5,9 +5,7 @@ import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseCreateSrc
 
 object ProjectBuild extends Build {
 
-  //val myMainClass = Some("simulator.Test")
   val myMainClass = Some("mips2mars.Test")
-  //val myMainClass = Some("tests.RandomSamples")
   lazy val root = Project(
     id = "root",
     base = file("."),
@@ -18,8 +16,8 @@ object ProjectBuild extends Build {
       scalaVersion := "2.10.2",
       scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-explaintypes"),
       scalacOptions in (Compile, doc) ++= Opts.doc.title("Simulator") ++ Seq("-diagrams"),
-      libraryDependencies <+= scalaVersion { "org.scala-lang" % "scala-compiler" % _ % "compile" },
-      libraryDependencies <+= scalaVersion { "org.scala-lang" % "scala-swing" % _ },
+      //libraryDependencies <+= scalaVersion { "org.scala-lang" % "scala-compiler" % _ % "compile" },
+      //libraryDependencies <+= scalaVersion { "org.scala-lang" % "scala-swing" % _ },
       mainClass in (Compile, run) := myMainClass,
       mainClass in (Compile, packageBin) := myMainClass))
 

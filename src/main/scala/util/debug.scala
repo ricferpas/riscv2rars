@@ -1,6 +1,6 @@
 package util
 
-object Debug {
+object debug {
   var enabled = false
   
   @inline 
