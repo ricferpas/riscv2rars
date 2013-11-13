@@ -283,4 +283,33 @@ object transforms {
       case None ⇒ prg
     }
   }
+  def fixStrings(prg: Program) = {
+    Program(prg.statements map {
+      case Directive("asciiz", strings) ⇒ Directive("asciiz", strings map { op ⇒
+        op match {
+          case StringConst(s) ⇒ StringConst {
+            val sb = new StringBuilder()
+            val it = s.iterator.buffered
+            while (it.hasNext) {
+              sb += (it.next.toInt match {
+                case c if (c & 0x80) != 0 ⇒ {
+                  var r = c & 0x1f
+                  def h = it.head.toInt
+                  while (it.hasNext && ((h & 0xc0) == 0x80)) {
+                    r = (r << 6) | (0x3f & h)
+                    it.next
+                  }
+                  r.toChar
+                }
+                case c ⇒ c.toChar
+              })
+            }
+            sb.result
+          }
+          case _ ⇒ op
+        }
+      })
+      case stm ⇒ stm
+    })
+  }
 }

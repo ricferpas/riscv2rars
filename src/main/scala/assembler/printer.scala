@@ -38,13 +38,22 @@ object printer {
     case _                   ⇒ format(op)
   }
 
+  var octalQuotes = false
   def format(op: Operand): String = {
-    def quoteChar(c: Char) = c match {
-      case c if (c > 126) ⇒ f"\\${c}%03o"
-      case '\n'           ⇒ "\\n"
-      case c if (c < 32)  ⇒ f"\\${c}%03o"
-      case _              ⇒ c.toString
-    }
+    def quoteChar(c: Char) =
+      if (octalQuotes) c match {
+        case c if (c > 126) ⇒ f"\\${c}%03o"
+        case '\n'           ⇒ "\\n"
+        case c if (c < 32)  ⇒ f"\\${c}%03o"
+        case _              ⇒ c.toString
+      }
+      else c match {
+        case '\0'          ⇒ "\\0"
+        case '\n'          ⇒ "\\n"
+        case '\t'          ⇒ "\\t"
+        case c if (c < 32) ⇒ f"\\${c}%03o"
+        case _             ⇒ c.toString
+      }
     op match {
       case Register(name)                   ⇒ "$" + name
       case LabelRef(name)                   ⇒ name
