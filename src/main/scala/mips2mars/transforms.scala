@@ -342,11 +342,20 @@ object transforms {
       subs += l → sub
       sub
     })
-
-    Program(prg.statements map {
-      case Label(l)              ⇒ Label(rename(l))
-      case LabelDefinition(l, v) ⇒ LabelDefinition(rename(l), v)
-      case s                     ⇒ s
-    })
+    def renameOperands(o: Operand): Operand = o match {
+      case Register(name)                   ⇒ o
+      case LabelRef(l)                      ⇒ LabelRef(subs.getOrElse(l, l))
+      case IndexedAddress(offset, base)     ⇒ IndexedAddress(renameOperands(offset), renameOperands(base))
+      case AssemblerFunction(name, operand) ⇒ AssemblerFunction(name, renameOperands(operand))
+      case l: Literal                       ⇒ l
+      case Parenthesis(op)                  ⇒ Parenthesis(renameOperands(op))
+      case ArithExpression(oper, a, b)      ⇒ ArithExpression(oper, renameOperands(a), renameOperands(b))
+    }
+    mapOperands(
+      Program(prg.statements map {
+        case Label(l)              ⇒ Label(rename(l))
+        case LabelDefinition(l, v) ⇒ LabelDefinition(rename(l), v)
+        case s                     ⇒ s
+      }))(renameOperands)
   }
 }
