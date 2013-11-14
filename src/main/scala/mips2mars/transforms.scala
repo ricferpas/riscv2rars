@@ -83,16 +83,14 @@ object transforms {
   }
 
   def simplifyData(prg: Program) =
-    Program(prg.statements flatMap { s ⇒
-      s match {
-        case Directive(d, LabelRef(name) :: size :: rest) if (Set("comm", "lcomm") contains d) ⇒
-          Seq(Label(name)) ++ (rest match {
-            case IntegerConst(align) :: _ ⇒ Some(Directive("align", Seq(IntegerConst(align match { case 1 ⇒ 0 case 2 ⇒ 1 case 3 ⇒ 2 case 4 ⇒ 2 case _ ⇒ 3 }))))
-            case _                        ⇒ None
-          }) ++ Seq(Directive("space", Seq(size)))
-        case Directive("section", LabelRef(s) :: _) if s.startsWith(".rodata") ⇒ Some(Directive("data", Seq()))
-        case s ⇒ Some(s)
-      }
+    Program(prg.statements flatMap {
+      case Directive(d, LabelRef(name) :: size :: rest) if (Set("comm", "lcomm") contains d) ⇒
+        Seq(Label(name)) ++ (rest match {
+          case IntegerConst(align) :: _ ⇒ Some(Directive("align", Seq(IntegerConst(align match { case 1 ⇒ 0 case 2 ⇒ 1 case 3 ⇒ 2 case 4 ⇒ 2 case _ ⇒ 3 }))))
+          case _                        ⇒ None
+        }) ++ Seq(Directive("space", Seq(size)))
+      case Directive("section", LabelRef(s) :: _) if s.startsWith(".rodata") ⇒ Some(Directive("data", Seq()))
+      case s ⇒ Some(s)
     })
 
   def removeUnusedLabels(prg: Program) = {
@@ -111,39 +109,11 @@ object transforms {
 
   def renameRegisters(prg: Program) = {
     def renameReg(reg: String) = try (Integer.parseInt(reg) match {
-      case 0  ⇒ "0"
-      case 1  ⇒ "at"
-      case 2  ⇒ "v0"
-      case 3  ⇒ "v1"
-      case 4  ⇒ "a0"
-      case 5  ⇒ "a1"
-      case 6  ⇒ "a2"
-      case 7  ⇒ "a3"
-      case 8  ⇒ "t0"
-      case 9  ⇒ "t1"
-      case 10 ⇒ "t2"
-      case 11 ⇒ "t3"
-      case 12 ⇒ "t4"
-      case 13 ⇒ "t5"
-      case 14 ⇒ "t6"
-      case 15 ⇒ "t7"
-      case 16 ⇒ "s0"
-      case 17 ⇒ "s1"
-      case 18 ⇒ "s2"
-      case 19 ⇒ "s3"
-      case 20 ⇒ "s4"
-      case 21 ⇒ "s5"
-      case 22 ⇒ "s6"
-      case 23 ⇒ "s7"
-      case 24 ⇒ "t8"
-      case 25 ⇒ "t9"
-      case 26 ⇒ "k0"
-      case 27 ⇒ "k1"
-      case 28 ⇒ "gp"
-      case 29 ⇒ "sp"
-      case 30 ⇒ "fp"
-      case 31 ⇒ "ra"
-      case _  ⇒ reg
+      case 0 ⇒ "0" case 1 ⇒ "at" case 2 ⇒ "v0" case 3 ⇒ "v1" case 4 ⇒ "a0" case 5 ⇒ "a1" case 6 ⇒ "a2" case 7 ⇒ "a3"
+      case 8 ⇒ "t0" case 9 ⇒ "t1" case 10 ⇒ "t2" case 11 ⇒ "t3" case 12 ⇒ "t4" case 13 ⇒ "t5" case 14 ⇒ "t6" case 15 ⇒ "t7"
+      case 16 ⇒ "s0" case 17 ⇒ "s1" case 18 ⇒ "s2" case 19 ⇒ "s3" case 20 ⇒ "s4" case 21 ⇒ "s5" case 22 ⇒ "s6" case 23 ⇒ "s7"
+      case 24 ⇒ "t8" case 25 ⇒ "t9" case 26 ⇒ "k0" case 27 ⇒ "k1" case 28 ⇒ "gp" case 29 ⇒ "sp" case 30 ⇒ "fp" case 31 ⇒ "ra"
+      case _ ⇒ reg
     }) catch {
       case e: NumberFormatException ⇒ reg
     }
@@ -270,29 +240,27 @@ object transforms {
 
   def fixStrings(prg: Program) = {
     Program(prg.statements map {
-      case Directive("asciiz", strings) ⇒ Directive("asciiz", strings map { op ⇒
-        op match {
-          case StringConst(s) ⇒ StringConst {
-            val sb = new StringBuilder()
-            val it = s.iterator.buffered
-            while (it.hasNext) {
-              sb += (it.next.toInt match {
-                case c if (c & 0x80) != 0 ⇒ {
-                  var r = c & 0x1f
-                  def h = it.head.toInt
-                  while (it.hasNext && ((h & 0xc0) == 0x80)) {
-                    r = (r << 6) | (0x3f & h)
-                    it.next
-                  }
-                  r.toChar
+      case Directive("asciiz", strings) ⇒ Directive("asciiz", strings map {
+        case StringConst(s) ⇒ StringConst {
+          val sb = new StringBuilder()
+          val it = s.iterator.buffered
+          while (it.hasNext) {
+            sb += (it.next.toInt match {
+              case c if (c & 0x80) != 0 ⇒ {
+                var r = c & 0x1f
+                def h = it.head.toInt
+                while (it.hasNext && ((h & 0xc0) == 0x80)) {
+                  r = (r << 6) | (0x3f & h)
+                  it.next
                 }
-                case c ⇒ c.toChar
-              })
-            }
-            sb.result
+                r.toChar
+              }
+              case c ⇒ c.toChar
+            })
           }
-          case _ ⇒ op
+          sb.result
         }
+        case op ⇒ op
       })
       case stm ⇒ stm
     })
