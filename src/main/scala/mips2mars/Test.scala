@@ -29,7 +29,8 @@ class Test1 extends App {
     ("addLuiPseudoinstructions", addLuiPseudoinstructions),
     ("avoidRegisterAt", avoidRegisterAt),
     ("fixStrings", fixStrings),
-    ("renameLabels", renameLabels))
+    ("renameLabels", renameLabels),
+    ("addEmptyLines", addEmptyLines))
     .zipWithIndex.foldLeft(p0) {
       case (acc, ((name, fn), idx)) ⇒ {
         val q = fn(acc)

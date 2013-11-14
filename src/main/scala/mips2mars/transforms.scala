@@ -305,4 +305,41 @@ object transforms {
         case o           ⇒ o
       }
   }
+  
+  def addEmptyLines(prg: Program) = {
+    val procedures = {
+      var ps = Set("main")
+      prg.statements foreach {
+        case Instruction("jal", Seq(LabelRef(l))) ⇒ ps += l
+        case _                                    ⇒
+      }
+      ps
+    }
+    val stmts = Buffer.empty[Statement]
+    val currentGroup = Buffer.empty[Statement]
+    for (s ← prg.statements) s match {
+      case Label(l) if procedures contains l ⇒ {
+        stmts += EmptyLine
+        stmts ++= currentGroup
+        currentGroup.clear
+        stmts += s
+      }
+      case Directive(d, _) if Set("data", "text", "section") contains d ⇒ {
+        stmts ++= currentGroup
+        currentGroup.clear
+        stmts += EmptyLine
+        stmts += s
+      }
+      case Directive(_, _) ⇒ {
+        currentGroup += s
+      }
+      case _ ⇒ {
+        stmts ++= currentGroup
+        currentGroup.clear
+        stmts += s
+      }
+    }
+    stmts ++= currentGroup
+    Program(stmts)
+  }
 }

@@ -31,6 +31,7 @@ object ast {
   case class Directive(directive: String, operands: Seq[Operand]) extends Statement
   case class Instruction(opcode: String, operands: Seq[Operand]) extends Statement
   case class Comment(comment: String, attached: Boolean = false) extends Statement
+  case object EmptyLine extends Statement
 
   sealed abstract class Operand
   case class Register(name: String) extends Operand

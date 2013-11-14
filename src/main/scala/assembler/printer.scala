@@ -31,6 +31,7 @@ object printer {
     case Instruction(i, operands) ⇒ indent + i + "\t" + (operands map { format(_) }).mkString(", ")
     case LabelDefinition(name, v) ⇒ name + " = " + v
     case Comment(c, _) ⇒ "\t#" + c
+    case EmptyLine ⇒ ""
   }
 
   def formatHex(op: Operand): String = op match {
