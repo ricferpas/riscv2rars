@@ -283,6 +283,7 @@ object transforms {
       case None ⇒ prg
     }
   }
+
   def fixStrings(prg: Program) = {
     Program(prg.statements map {
       case Directive("asciiz", strings) ⇒ Directive("asciiz", strings map { op ⇒
@@ -310,6 +311,42 @@ object transforms {
         }
       })
       case stm ⇒ stm
+    })
+  }
+
+  def renameLabels(prg: Program) = {
+    var indexedNames = Map.empty[String, Int].withDefaultValue(0)
+    def indexedName(n: String) = {
+      val r = indexedNames(n)
+      indexedNames += n → (r + 1)
+      f"$n$r%03d"
+    }
+    val labels = prg.statements flatMap {
+      case Label(l)              ⇒ Some(l)
+      case LabelDefinition(l, _) ⇒ Some(l)
+      case _                     ⇒ None
+    }
+    var usedLabels = labels.toSet
+    var subs = Map.empty[String, String]
+    def rename(l: String) = subs.getOrElse(l, {
+      var sub =
+        if (l matches """\$\.str.*""") {
+          indexedName("str")
+        } else if (l matches """\$JTI.*""") {
+          indexedName("jump_table")
+        } else if (l matches """\$BB.*""") {
+          l.substring(2)
+        } else l
+      while ((usedLabels contains sub) && (sub != l)) sub = sub + "X"
+      usedLabels += sub
+      subs += l → sub
+      sub
+    })
+
+    Program(prg.statements map {
+      case Label(l)              ⇒ Label(rename(l))
+      case LabelDefinition(l, v) ⇒ LabelDefinition(rename(l), v)
+      case s                     ⇒ s
     })
   }
 }

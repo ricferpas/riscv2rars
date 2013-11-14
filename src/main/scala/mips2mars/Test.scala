@@ -28,7 +28,8 @@ class Test1 extends App {
     ("simplyfyDirectives", simplyfyDirectives),
     ("addLuiPseudoinstructions", addLuiPseudoinstructions),
     ("avoidRegisterAt", avoidRegisterAt),
-    ("fixStrings", fixStrings))
+    ("fixStrings", fixStrings),
+    ("renameLabels", renameLabels))
     .zipWithIndex.foldLeft(p0) {
       case (acc, ((name, fn), idx)) ⇒ {
         val q = fn(acc)
