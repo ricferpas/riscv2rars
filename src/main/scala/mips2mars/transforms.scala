@@ -8,19 +8,38 @@ object transforms {
   type Transform = Program ⇒ Program
 
   def mapOperands(prg: Program)(fn: Operand ⇒ Operand) = {
+    def recurse(o: Operand): Operand = o match {
+      case Register(_)                   ⇒ fn(o)
+      case LabelRef(_)                   ⇒ fn(o)
+      case l: Literal                    ⇒ fn(l)
+      case IndexedAddress(offset, base)  ⇒ fn(IndexedAddress(recurse(offset), recurse(base)))
+      case AssemblerFunction(name, oper) ⇒ fn(AssemblerFunction(name, recurse(oper)))
+      case ArithExpression(oper, a, b)   ⇒ fn(ArithExpression(oper, recurse(a), recurse(b)))
+      case Parenthesis(op)               ⇒ fn(Parenthesis(recurse(op)))
+    }
     Program(prg.statements map {
-      case Directive(d, operands)    ⇒ Directive(d, operands map fn)
-      case Instruction(i, operands)  ⇒ Instruction(i, operands map fn)
-      case s @ Label(_)              ⇒ s
-      case s @ LabelDefinition(_, _) ⇒ s
-      case s @ Comment(_, _)         ⇒ s
+      case Directive(d, operands)   ⇒ Directive(d, operands map recurse)
+      case Instruction(i, operands) ⇒ Instruction(i, operands map recurse)
+      case s                        ⇒ s
     })
   }
 
   def foreachOperand(prg: Program)(fn: Operand ⇒ Unit) = {
+    def recurse(o: Operand): Unit = o match {
+      case Register(_) ⇒ fn(o)
+      case LabelRef(_) ⇒ fn(o)
+      case l: Literal  ⇒ fn(l)
+      case IndexedAddress(offset, base) ⇒
+        recurse(offset); recurse(base); fn(IndexedAddress(offset, base))
+      case AssemblerFunction(name, oper) ⇒
+        recurse(oper); fn(AssemblerFunction(name, oper))
+      case ArithExpression(oper, a, b) ⇒
+        recurse(a); recurse(b); fn(ArithExpression(oper, a, b))
+      case Parenthesis(op) ⇒ recurse(op); fn(Parenthesis(op))
+    }
     prg.statements foreach {
-      case Directive(_, ops)   ⇒ ops foreach fn
-      case Instruction(_, ops) ⇒ ops foreach fn
+      case Directive(_, ops)   ⇒ ops foreach recurse
+      case Instruction(_, ops) ⇒ ops foreach recurse
       case s                   ⇒
     }
   }
@@ -79,16 +98,10 @@ object transforms {
   def removeUnusedLabels(prg: Program) = {
     val it = prg.statements.iterator
     var usedLabels = Set[String]()
-    def examine(operand: Operand): Unit = operand match {
-      case LabelRef(l)               ⇒ usedLabels += l
-      case IndexedAddress(of, ba)    ⇒ { examine(of); examine(ba) }
-      case AssemblerFunction(_, op)  ⇒ examine(op)
-      case ArithExpression(op, a, b) ⇒ { examine(a); examine(b) }
-      case Parenthesis(e)            ⇒ examine(e)
-      case Register(_)               ⇒
-      case _: Literal                ⇒
+    foreachOperand(prg) {
+      case LabelRef(l) ⇒ usedLabels += l
+      case _           ⇒
     }
-    foreachOperand(prg)(examine)
     Program(prg.statements flatMap {
       case Label(l) if !(usedLabels contains l) ⇒ None
       case LabelDefinition(l, _) if !(usedLabels contains l) ⇒ None
@@ -134,16 +147,10 @@ object transforms {
     }) catch {
       case e: NumberFormatException ⇒ reg
     }
-    def rename(operand: Operand): Operand = operand match {
-      case Register(name)                   ⇒ Register(renameReg(name))
-      case o @ LabelRef(_)                  ⇒ o
-      case IndexedAddress(offset, base)     ⇒ IndexedAddress(rename(offset), rename(base))
-      case AssemblerFunction(name, operand) ⇒ AssemblerFunction(name, rename(operand))
-      case l: Literal                       ⇒ l
-      case Parenthesis(op)                  ⇒ Parenthesis(rename(op))
-      case ArithExpression(oper, a, b)      ⇒ ArithExpression(oper, rename(a), rename(b))
+    mapOperands(prg) {
+      case Register(name) ⇒ Register(renameReg(name))
+      case o              ⇒ o
     }
-    mapOperands(prg)(rename)
   }
 
   def groupSections(prg: Program) = {
@@ -224,19 +231,10 @@ object transforms {
     Program(ret)
   }
 
-  def simplyfyOperands(prg: Program) = {
-    def simplyfy(operand: Operand): Operand = operand match {
-      case Register(_)                            ⇒ operand
-      case LabelRef(_)                            ⇒ operand
-      case IndexedAddress(offset, Register("gp")) ⇒ simplyfy(offset)
-      case IndexedAddress(offset, base)           ⇒ IndexedAddress(simplyfy(offset), simplyfy(base))
-      case AssemblerFunction("gp_rel", operand)   ⇒ simplyfy(operand)
-      case AssemblerFunction(name, operand)       ⇒ AssemblerFunction(name, simplyfy(operand))
-      case l: Literal                             ⇒ operand
-      case Parenthesis(op)                        ⇒ Parenthesis(simplyfy(op))
-      case ArithExpression(oper, a, b)            ⇒ ArithExpression(oper, simplyfy(a), simplyfy(b))
-    }
-    mapOperands(prg)(simplyfy)
+  def simplyfyOperands(prg: Program) = mapOperands(prg) {
+    case IndexedAddress(offset, Register("gp")) ⇒ offset
+    case AssemblerFunction("gp_rel", o)         ⇒ o
+    case o                                      ⇒ o
   }
 
   def simplyfyDirectives(prg: Program) = {
@@ -257,29 +255,15 @@ object transforms {
 
   def avoidRegisterAt(prg: Program) = {
     var usedRegisters = Set.empty[String]
-    def examine(operand: Operand): Unit = operand match {
-      case LabelRef(l)               ⇒
-      case IndexedAddress(of, ba)    ⇒ { examine(of); examine(ba) }
-      case AssemblerFunction(_, op)  ⇒ examine(op)
-      case ArithExpression(op, a, b) ⇒ { examine(a); examine(b) }
-      case Parenthesis(e)            ⇒ examine(e)
-      case Register(r)               ⇒ usedRegisters += r
-      case _: Literal                ⇒
+    foreachOperand(prg) {
+      case Register(r) ⇒ usedRegisters += r
+      case _           ⇒
     }
-    foreachOperand(prg)(examine)
     Seq("t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t1", "t2", "gp", "fp", "k0", "k1").find(!usedRegisters(_)) match {
-      case Some(alternative) ⇒
-        def rename(operand: Operand): Operand = operand match {
-          case Register("at")                   ⇒ Register(alternative)
-          case Register(_)                      ⇒ operand
-          case LabelRef(_)                      ⇒ operand
-          case IndexedAddress(offset, base)     ⇒ IndexedAddress(rename(offset), rename(base))
-          case AssemblerFunction(name, operand) ⇒ AssemblerFunction(name, rename(operand))
-          case l: Literal                       ⇒ operand
-          case Parenthesis(op)                  ⇒ Parenthesis(rename(op))
-          case ArithExpression(oper, a, b)      ⇒ ArithExpression(oper, rename(a), rename(b))
-        }
-        mapOperands(prg)(rename)
+      case Some(alternative) ⇒ mapOperands(prg) {
+        case Register("at") ⇒ Register(alternative)
+        case o              ⇒ o
+      }
       case None ⇒ prg
     }
   }
@@ -342,20 +326,15 @@ object transforms {
       subs += l → sub
       sub
     })
-    def renameOperands(o: Operand): Operand = o match {
-      case Register(name)                   ⇒ o
-      case LabelRef(l)                      ⇒ LabelRef(subs.getOrElse(l, l))
-      case IndexedAddress(offset, base)     ⇒ IndexedAddress(renameOperands(offset), renameOperands(base))
-      case AssemblerFunction(name, operand) ⇒ AssemblerFunction(name, renameOperands(operand))
-      case l: Literal                       ⇒ l
-      case Parenthesis(op)                  ⇒ Parenthesis(renameOperands(op))
-      case ArithExpression(oper, a, b)      ⇒ ArithExpression(oper, renameOperands(a), renameOperands(b))
-    }
+
     mapOperands(
       Program(prg.statements map {
         case Label(l)              ⇒ Label(rename(l))
         case LabelDefinition(l, v) ⇒ LabelDefinition(rename(l), v)
         case s                     ⇒ s
-      }))(renameOperands)
+      })) {
+        case LabelRef(l) ⇒ LabelRef(subs.getOrElse(l, l))
+        case o           ⇒ o
+      }
   }
 }
