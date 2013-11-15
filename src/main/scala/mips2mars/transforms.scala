@@ -66,10 +66,8 @@ object transforms {
 
   def removeSections(prg: Program, sections: Set[String] = Set(".debug_info", ".mdebug.abi32", ".debug_abbrev", ".debug_aranges", ".debug_macinfo", ".debug_line", ".debug_loc", ".debug_pubtypes", ".debug_str", ".debug_ranges")) = {
     var section = ""
-    val it = prg.statements.iterator
     val ret = Buffer[Statement]()
-    while (it.hasNext) {
-      val s = it.next
+    for (s ← prg.statements) {
       section = s match {
         case Directive(d, _) if (Set("data", "text", "bss", "kdata", "ktext", "kbss", "sdata", "sbss") contains d) ⇒ d
         case Directive("section", LabelRef(s) :: _) ⇒ s
@@ -94,7 +92,6 @@ object transforms {
     })
 
   def removeUnusedLabels(prg: Program) = {
-    val it = prg.statements.iterator
     var usedLabels = Set[String]()
     foreachOperand(prg) {
       case LabelRef(l) ⇒ usedLabels += l
@@ -305,7 +302,7 @@ object transforms {
         case o           ⇒ o
       }
   }
-  
+
   def addEmptyLines(prg: Program) = {
     val procedures = {
       var ps = Set("main")
