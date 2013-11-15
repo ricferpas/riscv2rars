@@ -9,6 +9,7 @@ import passes._
 object passes {
   case class Pass(name: String, transform: Transform)
   val allPasses = Seq(
+    Pass("addRuntime", addRuntime),
     Pass("removeSections", removeSections(_)),
     Pass("removeComments", removeComments),
     Pass("removeDirectives", removeDirectives(_)),
@@ -73,8 +74,8 @@ object Main extends App {
   val p0 = ast.Program.fromFile(inputFile.get)
   if (debugPasses) {
     val out = new FileOutputStream(debugPassFilename("00-initial"))
-    Console.withOut(out) { println(printer.format(p0)) }
-    out.close()
+    try Console.withOut(out) { println(printer.format(p0)) }
+    finally out.close()
   }
 
   val result = allPasses.filter { case Pass(n, _) ⇒ !(disabledPasses contains n) }.zipWithIndex.foldLeft(p0) {
@@ -82,8 +83,8 @@ object Main extends App {
       val q = fn(acc)
       if (debugPasses) {
         val out = new FileOutputStream(debugPassFilename(f"${idx + 1}%02d-$name"))
-        Console.withOut(out) { println(printer.format(q)) }
-        out.close()
+        try Console.withOut(out) { println(printer.format(q)) }
+        finally out.close()
       }
       q
     }
@@ -93,6 +94,6 @@ object Main extends App {
     case Some(n) ⇒ new FileOutputStream(n)
     case None    ⇒ Console.out
   }
-  Console.withOut(out) { println(printer.format(result)) }
-  outputFile map { n ⇒ out.close() }
+  try Console.withOut(out) { println(printer.format(result)) }
+  finally outputFile map { n ⇒ out.close() }
 }

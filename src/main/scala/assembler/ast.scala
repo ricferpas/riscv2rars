@@ -3,16 +3,18 @@ package assembler
 object ast {
   case class Program(statements: Seq[Statement])
   object Program {
+
+    def fromReader(r: java.io.Reader) = {
+      parser.parseAll(parser.program, r) match {
+        case parser.Success(prog, _) ⇒ prog
+        case x                       ⇒ { sys.error(x.toString()) }
+      }
+    }
+
     def fromFile(file: String) = {
       val f = new java.io.FileReader(file)
-      try {
-        parser.parseAll(parser.program, f) match {
-          case parser.Success(prog, _) ⇒ prog
-          case x                       ⇒ { sys.error(x.toString()) }
-        }
-      } finally {
-        f.close()
-      }
+      try fromReader(f)
+      finally f.close()
     }
   }
 

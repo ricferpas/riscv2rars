@@ -339,4 +339,11 @@ object transforms {
     stmts ++= currentGroup
     Program(stmts)
   }
+
+  def addRuntime(prg: Program) = {
+    val reader = new java.io.InputStreamReader(getClass.getResourceAsStream("/runtime/mips-runtime.s"))
+    val runtime = Program.fromReader(reader)
+    reader.close()
+    Program(prg.statements ++ runtime.statements)
+  }
 }
