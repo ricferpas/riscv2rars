@@ -4,6 +4,28 @@ import java.io.FileOutputStream
 import assembler._
 import ast._
 import transforms._
+import passes._
+
+object passes {
+  case class Pass(name: String, transform: Transform)
+  val allPasses = Seq(
+    Pass("removeSections", removeSections(_)),
+    Pass("removeComments", removeComments),
+    Pass("removeDirectives", removeDirectives(_)),
+    Pass("removeDelaySlot", removeDelaySlot),
+    Pass("simplifyData", simplifyData),
+    Pass("removeUnusedLabels", removeUnusedLabels),
+    Pass("renameRegisters", renameRegisters),
+    Pass("groupSections", groupSections),
+    Pass("removeAlignFromText", removeAlignFromText),
+    Pass("simplyfyOperands", simplyfyOperands),
+    Pass("simplyfyDirectives", simplyfyDirectives),
+    Pass("addLuiPseudoinstructions", addLuiPseudoinstructions),
+    Pass("avoidRegisterAt", avoidRegisterAt),
+    Pass("fixStrings", fixStrings),
+    Pass("renameLabels", renameLabels),
+    Pass("addEmptyLines", addEmptyLines))
+}
 
 object Main extends App {
   var outputFile: Option[String] = None
@@ -14,22 +36,36 @@ object Main extends App {
     case Some(p) ⇒ s"${p}-${id}.s"
     case None    ⇒ s"${outputFile.get}-${id}.s"
   }
+  var disabledPasses = Set.empty[String]
+
+  def error(e: String) {
+    Console.withOut(Console.err) { println(e) }
+    sys.exit(1)
+  }
 
   val re_debug_prefix = "--debug-prefix=(.+)".r
   val re_output_file = "--output=(.+)".r
+  val re_disable_pass = "--disable-pass=(.+)".r
+  val re_any_option = "--(.+)".r
   args.toSeq.foreach {
     case "--debug-passes"   ⇒ debugPasses = true
     case re_debug_prefix(p) ⇒ debugPassesPrefix = Some(p)
     case re_output_file(f) ⇒ outputFile match {
       case None    ⇒ outputFile = Some(f)
-      case Some(_) ⇒ sys.error("Más de un fichero de salida especificado")
+      case Some(_) ⇒ error("Más de un fichero de salida especificado.")
     }
+    case re_disable_pass(p) if (allPasses map (_.name)) contains p ⇒ disabledPasses += p
+    case re_any_option(o) ⇒ error(s"Opción desconocida $o")
     case f ⇒ inputFile match {
       case None    ⇒ inputFile = Some(f)
-      case Some(_) ⇒ sys.error("Más de un fichero de entrada especificado")
+      case Some(x) ⇒ error(s"Más de un fichero de entrada especificado «$x» y después «$f».")
     }
   }
 
+  if (debugPasses && debugPassesPrefix == None && outputFile == None)
+    error("--debug-passes sin --debug-prefix= ni --output=.")
+
+  if (inputFile == None) error("Fichero de entrada no especificado.")
   val p0 = ast.Program.fromFile(inputFile.get)
   if (debugPasses) {
     val out = new FileOutputStream(debugPassFilename("00-initial"))
@@ -37,34 +73,17 @@ object Main extends App {
     out.close()
   }
 
-  val result = Seq[(String, Transform)](
-    ("removeSections", removeSections(_)),
-    ("removeComments", removeComments),
-    ("removeDirectives", removeDirectives(_)),
-    ("removeDelaySlot", removeDelaySlot),
-    ("simplifyData", simplifyData),
-    ("removeUnusedLabels", removeUnusedLabels),
-    ("renameRegisters", renameRegisters),
-    ("groupSections", groupSections),
-    ("removeAlignFromText", removeAlignFromText),
-    ("simplyfyOperands", simplyfyOperands),
-    ("simplyfyDirectives", simplyfyDirectives),
-    ("addLuiPseudoinstructions", addLuiPseudoinstructions),
-    ("avoidRegisterAt", avoidRegisterAt),
-    ("fixStrings", fixStrings),
-    ("renameLabels", renameLabels),
-    ("addEmptyLines", addEmptyLines))
-    .zipWithIndex.foldLeft(p0) {
-      case (acc, ((name, fn), idx)) ⇒ {
-        val q = fn(acc)
-        if (debugPasses) {
-          val out = new FileOutputStream(debugPassFilename(f"${idx + 1}%02d-$name"))
-          Console.withOut(out) { println(printer.format(q)) }
-          out.close()
-        }
-        q
+  val result = allPasses.filter { case Pass(n, _) ⇒ !(disabledPasses contains n) }.zipWithIndex.foldLeft(p0) {
+    case (acc, (passes.Pass(name, fn), idx)) ⇒ {
+      val q = fn(acc)
+      if (debugPasses) {
+        val out = new FileOutputStream(debugPassFilename(f"${idx + 1}%02d-$name"))
+        Console.withOut(out) { println(printer.format(q)) }
+        out.close()
       }
+      q
     }
+  }
 
   val out = outputFile match {
     case Some(n) ⇒ new FileOutputStream(n)
