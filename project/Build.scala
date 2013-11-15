@@ -5,7 +5,8 @@ import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseCreateSrc
 
 object ProjectBuild extends Build {
 
-  val myMainClass = Some("mips2mars.Test")
+  //val myMainClass = Some("mips2mars.Test")
+  val myMainClass = Some("mips2mars.Main")
   lazy val root = Project(
     id = "root",
     base = file("."),

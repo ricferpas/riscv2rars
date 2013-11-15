@@ -1,8 +1,4 @@
 #!/bin/bash
 
-cat $@ runtime/mips-runtime.s > /tmp/input-llvm-program+rt.s
-mkdir -p /tmp/mips2mars-output
-
-sbt < <(echo run /tmp/input-llvm-program+rt.s /tmp/mips2mars-output/o) 
+sbt < <(echo run $@) 
 echo " "
-
