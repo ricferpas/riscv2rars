@@ -48,6 +48,10 @@ object Main extends App {
   val re_disable_pass = "--disable-pass=(.+)".r
   val re_any_option = "--(.+)".r
   args.toSeq.foreach {
+    case "--list-passes" ⇒ {
+      allPasses foreach { p ⇒ println(p.name) }
+      sys.exit(0)
+    }
     case "--debug-passes"   ⇒ debugPasses = true
     case re_debug_prefix(p) ⇒ debugPassesPrefix = Some(p)
     case re_output_file(f) ⇒ outputFile match {
