@@ -1,5 +1,5 @@
 <projectDescription>
-  <name>simulator</name>
+  <name>mips2mars</name>
   <buildSpec>
     <buildCommand>
       <name>org.scala-ide.sdt.core.scalabuilder</name>
