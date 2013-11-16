@@ -12,12 +12,12 @@ object printer {
     val sb = new StringBuilder
     val it = prg.statements.iterator.buffered
     while (it.hasNext) {
-      sb ++= format(it.next)
-      if (it.hasNext) {
-        it.head match {
-          case Comment(_, true) ⇒
-          case _                ⇒ sb += '\n'
-        }
+      val s = it.next
+      sb ++= format(s)
+      if (it.hasNext) (s, it.head) match {
+        case (_, Comment(_, true))                        ⇒
+        case (Label(s), _) if s.matches("B[0-9]+_[0-9]+") ⇒
+        case (_, _)                                       ⇒ sb += '\n'
       }
     }
     sb.toString
