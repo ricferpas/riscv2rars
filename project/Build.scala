@@ -2,11 +2,16 @@ import sbt._
 import sbt.Keys._
 import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseKeys
 import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseCreateSrc
+import ProguardPlugin._
 
 object ProjectBuild extends Build {
-
   //val myMainClass = Some("mips2mars.Test")
   val myMainClass = Some("mips2mars.Main")
+
+  lazy val proguard = proguardSettings ++ Seq(
+    proguardOptions := Seq(keepMain("mips2mars.Main"))
+  )
+
   lazy val root = Project(
     id = "root",
     base = file("."),
@@ -20,7 +25,8 @@ object ProjectBuild extends Build {
       //libraryDependencies <+= scalaVersion { "org.scala-lang" % "scala-compiler" % _ % "compile" },
       //libraryDependencies <+= scalaVersion { "org.scala-lang" % "scala-swing" % _ },
       mainClass in (Compile, run) := myMainClass,
-      mainClass in (Compile, packageBin) := myMainClass))
+      mainClass in (Compile, packageBin) := myMainClass)).
+  settings(proguard: _*)
 
   EclipseKeys.withSource := true
 }
