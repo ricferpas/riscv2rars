@@ -198,6 +198,15 @@ object transforms {
     Program(ret)
   }
 
+  def addSimplePseudoinstructions(prg: Program) = {
+    Program(prg.statements map {
+      case Instruction("addiu", Seq(Register(regDst), Register("zero"), IntegerConst(imm))) ⇒ Instruction("li", Seq(Register(regDst), IntegerConst(imm)))
+      case Instruction("beq", Seq(Register(srcDst), Register("zero"), dest)) ⇒ Instruction("beqz", Seq(Register(srcDst), dest))
+      case Instruction("bne", Seq(Register(srcDst), Register("zero"), dest)) ⇒ Instruction("bnez", Seq(Register(srcDst), dest))
+      case s ⇒ s
+    })
+  }
+
   def simplyfyOperands(prg: Program) = mapOperands(prg) {
     case IndexedAddress(offset, Register("gp")) ⇒ offset
     case AssemblerFunction("gp_rel", o)         ⇒ o

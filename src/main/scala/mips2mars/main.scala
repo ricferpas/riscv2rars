@@ -22,6 +22,7 @@ object passes {
     Pass("simplyfyOperands", simplyfyOperands),
     Pass("simplyfyDirectives", simplyfyDirectives),
     Pass("addLuiPseudoinstructions", addLuiPseudoinstructions),
+    Pass("addSimplePseudoinstructions", addSimplePseudoinstructions),
     Pass("avoidRegisterAt", avoidRegisterAt),
     Pass("fixStrings", fixStrings),
     Pass("renameLabels", renameLabels),
