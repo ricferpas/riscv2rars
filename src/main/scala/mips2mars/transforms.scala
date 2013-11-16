@@ -387,13 +387,14 @@ object transforms {
         debug.p("usedReg? " + reg)
         var visited: Set[String] = Set.empty
         var used = false
-        def exploreLabel(l: String) { explore(prg.findLabel(l)); visited += l }
+        def exploreLabel(l: String) { if (!visited(l)) { explore(prg.findLabel(l)); visited += l } }
         def explore(start: Stream[Statement]) = debug.indent {
           var it = start
           var live = true
           var stop = it.isEmpty | used | !live
           while (!stop) {
             val s = it.head
+            var next = it.tail
             val irs = s.inputOperands flatMap findRegisters
             used |= irs contains reg
             val ors = s.outputOperands flatMap findRegisters
@@ -405,23 +406,23 @@ object transforms {
               case Label(l)                               ⇒ visited += l
               case Instruction("jr", Seq(Register("ra"))) ⇒ used = Register(reg).isProcOutput | Register(reg).isCalleeSaved
               case Instruction("jr", _)                   ⇒ used = true // No se sabe
-              case Instruction("j", Seq(LabelRef(l)))     ⇒ it = prg.findLabel(l)
+              case Instruction("j", Seq(LabelRef(l)))     ⇒ next = prg.findLabel(l)
               case Instruction("jal", Seq(LabelRef(l))) ⇒ {
                 if (Register(reg).isProcInput) used = true
                 if (!Register(reg).isCalleeSaved) stop = true
               }
-              case Instruction(i, Seq(_, _, LabelRef(l))) if Set("beq", "bne", "blt", "bge", "bgeu", "bgt", "bgtu", "ble", "bleu", "blt", "bltu")(i) ⇒
+              case Instruction(i, Seq(_, _, LabelRef(l))) if Set("beq", "bne", "blt", "bge", "bgeu", "bgt", "bgtu", "ble", "bleu", "blt", "bltu", "bge")(i) ⇒
                 exploreLabel(l); debug.p("continuing after " + s)
-              case Instruction(i, Seq(_, LabelRef(l))) if Set("beqz", "bnez", "bltz", "bgez", "bgtz", "blez")(i) ⇒
+              case Instruction(i, Seq(_, LabelRef(l))) if Set("beqz", "bnez", "bltz", "bgez", "bgtz", "blez", "bgez", "blez")(i) ⇒
                 exploreLabel(l); debug.p("continuing after " + s)
-              case Instruction(i, _) if Set("sw", "lw", "li", "la", "move", "andi", "sll", "srl", "sra", "sb", "lb", "lbu", "subu", "slti", "sltu", "addu", "addiu", "mul", "not", "syscall", "lui")(i) ⇒
+              case Instruction(i, _) if Set("sw", "swc1", "lw", "lwc1", "li", "la", "move", "andi", "add", "add.s", "sub", "sll", "srl", "sra", "sb", "lb", "lbu", "subu", "subi", "slti", "sltu", "addu", "addiu", "mul", "mul.s", "not", "syscall", "lui", "div", "div.s", "addi", "cvt.s.w", "cvt.w.s", "mfc1", "mtc1")(i) ⇒
               case Instruction("nop", _) ⇒
               case EmptyLine ⇒
               case Directive(_, _) ⇒
               case Comment(_, _) ⇒
               case s ⇒ sys.error("Unmatched in DCE: " + s)
             }
-            it = it.tail
+            it = next
             stop |= it.isEmpty | used | !live
           }
         }
