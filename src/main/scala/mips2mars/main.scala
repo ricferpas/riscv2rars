@@ -27,7 +27,8 @@ object passes {
     Pass("fixStrings", fixStrings),
     Pass("renameLabels", renameLabels),
     Pass("asciizSpaceDirective", asciizSpaceDirective),
-    Pass("addEmptyLines", addEmptyLines))
+    Pass("addEmptyLines", addEmptyLines),
+    Pass("DCE", DCE))
 }
 
 object Main extends App {

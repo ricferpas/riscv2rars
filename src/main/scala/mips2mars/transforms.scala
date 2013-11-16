@@ -3,6 +3,7 @@ package mips2mars
 import scala.collection.mutable.Buffer
 import assembler._
 import ast._
+import util.debug
 
 object transforms {
   type Transform = Program ⇒ Program
@@ -366,5 +367,90 @@ object transforms {
       }
       case s ⇒ Seq(s)
     })
+  }
+
+  def DCE(prg: Program) = {
+    def findRegisters(o: Operand): Set[String] = o match {
+      case Register(r)                   ⇒ Set(r)
+      case LabelRef(_)                   ⇒ Set.empty
+      case l: Literal                    ⇒ Set.empty
+      case IndexedAddress(offset, base)  ⇒ findRegisters(offset) ++ findRegisters(base)
+      case AssemblerFunction(name, oper) ⇒ findRegisters(oper)
+      case ArithExpression(oper, a, b)   ⇒ findRegisters(a) ++ findRegisters(b)
+      case Parenthesis(op)               ⇒ findRegisters(op)
+    }
+    def usedReg(reg: String, code: Stream[Statement]): Boolean = {
+      if (Set("sp", "29")(reg)) {
+        debug.p(s"usedReg($reg) = true")
+        true
+      } else {
+        debug.p("usedReg? " + reg)
+        var visited: Set[String] = Set.empty
+        var used = false
+        def exploreLabel(l: String) { explore(prg.findLabel(l)); visited += l }
+        def explore(start: Stream[Statement]) = debug.indent {
+          var it = start
+          var live = true
+          var stop = it.isEmpty | used | !live
+          while (!stop) {
+            val s = it.head
+            val irs = s.inputOperands flatMap findRegisters
+            used |= irs contains reg
+            val ors = s.outputOperands flatMap findRegisters
+            live &= !(ors contains reg)
+            debug.p(s"$s\t[$ors ← $irs]\t$live $used")
+            s match {
+              case Label(l) if visited(l) ⇒
+                debug.p("Found visited " + l); stop = true
+              case Label(l)                               ⇒ visited += l
+              case Instruction("jr", Seq(Register("ra"))) ⇒ used = Register(reg).isProcOutput | Register(reg).isCalleeSaved
+              case Instruction("jr", _)                   ⇒ used = true // No se sabe
+              case Instruction("j", Seq(LabelRef(l)))     ⇒ it = prg.findLabel(l)
+              case Instruction("jal", Seq(LabelRef(l))) ⇒ {
+                if (Register(reg).isProcInput) used = true
+                if (!Register(reg).isCalleeSaved) stop = true
+              }
+              case Instruction(i, Seq(_, _, LabelRef(l))) if Set("beq", "bne", "blt", "bge", "bgeu", "bgt", "bgtu", "ble", "bleu", "blt", "bltu")(i) ⇒
+                exploreLabel(l); debug.p("continuing after " + s)
+              case Instruction(i, Seq(_, LabelRef(l))) if Set("beqz", "bnez", "bltz", "bgez", "bgtz", "blez")(i) ⇒
+                exploreLabel(l); debug.p("continuing after " + s)
+              case Instruction(i, _) if Set("sw", "lw", "li", "la", "move", "andi", "sll", "srl", "sra", "sb", "lb", "lbu", "subu", "slti", "sltu", "addu", "addiu", "mul", "not", "syscall", "lui")(i) ⇒
+              case Instruction("nop", _) ⇒
+              case EmptyLine ⇒
+              case Directive(_, _) ⇒
+              case Comment(_, _) ⇒
+              case s ⇒ sys.error("Unmatched in DCE: " + s)
+            }
+            it = it.tail
+            stop |= it.isEmpty | used | !live
+          }
+        }
+        explore(code)
+        debug.p(s"usedReg($reg) = $used")
+        used
+      }
+    }
+
+    var it = prg.statements.toStream
+    val ret = Buffer[Statement]()
+    while (!it.isEmpty) {
+      val s = it.head
+      def useful = s match {
+        case s if s.isJump ⇒ true
+        case s if s.isNop  ⇒ false
+        case Instruction(i, _) ⇒ (s.outputOperands find {
+          case Register(r) ⇒ { debug.p(s"is useful $s?"); debug.indent { usedReg(r, it.tail) } }
+          case _           ⇒ true
+        }) match {
+          case Some(o) ⇒ true
+          case None    ⇒ false
+        }
+        case _ ⇒ true
+      }
+      if (useful) ret += s
+      else debug.p("DCE descartada " + s)
+      it = it.tail
+    }
+    Program(ret)
   }
 }
