@@ -20,7 +20,7 @@ object ast {
 
   sealed abstract class Statement {
     def isJump = this match {
-      case Instruction(op, _) if Set("beq", "bne", "j", "jal", "jr") contains op ⇒ true
+      case Instruction(op, _) if Set("beq", "bne", "j", "jr", "jalr", "bltz", "beqz", "bc1f", "bgez", "bgezal", "bgtz", "blez", "bltz", "bltzal", "b", "beqz", "bge", "bgeu", "bgt", "bgtu", "ble", "bleu", "blt", "bltu", "bnez") contains op ⇒ true
       case _ ⇒ false
     }
     def isNop = this match {
