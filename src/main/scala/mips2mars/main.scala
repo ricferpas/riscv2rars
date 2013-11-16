@@ -25,6 +25,7 @@ object passes {
     Pass("avoidRegisterAt", avoidRegisterAt),
     Pass("fixStrings", fixStrings),
     Pass("renameLabels", renameLabels),
+    Pass("asciizSpaceDirective", asciizSpaceDirective),
     Pass("addEmptyLines", addEmptyLines))
 }
 

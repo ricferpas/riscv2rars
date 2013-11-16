@@ -346,4 +346,16 @@ object transforms {
     reader.close()
     Program(prg.statements ++ runtime.statements)
   }
+
+  def asciizSpaceDirective(prg: Program) = {
+    val re = "(.+\0+)".r
+    Program(prg.statements flatMap {
+      case Directive("asciiz", Seq(StringConst(re(s)))) ⇒ {
+        val numZeros = s.length - s.lastIndexWhere(_ != 0)
+        if (numZeros > 30) Seq(Directive("asciiz", Seq(StringConst(s.substring(0, s.length - numZeros + 1)))), Directive("space", Seq(IntegerConst(numZeros))))
+        else Seq(Directive("asciiz", Seq(StringConst(s))))
+      }
+      case s ⇒ Seq(s)
+    })
+  }
 }
