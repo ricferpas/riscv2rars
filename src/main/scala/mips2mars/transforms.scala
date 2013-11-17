@@ -215,6 +215,49 @@ object transforms {
     })
   }
 
+  case class Pseudo(i1n: String, i1a: Seq[String], i2n: String, i2a: Seq[String], repln: String, repla: Seq[String]) {
+    def apply(i1: Instruction, i2: Instruction): Option[Instruction] = {
+      if (i1.opcode == i1n && i2.opcode == i2n && i1.operands.size == i1a.size && i2.operands.size == i2a.size) {
+        var ops = (i1a zip i1.operands).toMap
+        val conflicts = (i2a zip i2.operands) filter {
+          case (a, o) ⇒ (ops contains a) && (o != ops(a))
+        }
+        if (conflicts.isEmpty) {
+          ops = ops ++ (i2a zip i2.operands)
+          Some(Instruction(repln, repla map ops))
+        } else None
+      } else None
+    }
+  }
+  def Pseudo(p: String): Pseudo = {
+    val Seq(i1p, i2p, replp) = p.split(",", 3).toSeq
+    val Seq(i1n, i1a) = i1p.split(" ", 2).toSeq
+    val Seq(i2n, i2a) = i2p.split(" ", 2).toSeq
+    val Seq(repln, repla) = replp.split(" ", 2).toSeq
+    Pseudo(i1n, i1a.split(" ").toSeq, i2n, i2a.split(" ").toSeq, repln, repla.split(" ").toSeq)
+  }
+  val pseudos = Set(("slti t a b, bnez t l, blt a b l")).
+    map { Pseudo(_) }
+
+  def addComplexPseudoinstructions(prg: Program) = {
+    var producers = Map.empty[String, Statement].withDefaultValue(EmptyLine)
+    val ret = Buffer.empty[Statement]
+    prg.statements foreach { s ⇒
+      for (Register(r) ← s.outputOperands) producers += r -> s
+      ret += (s match {
+        case Label(_) ⇒
+          producers = producers.empty; s
+        case Instruction("bnez", Seq(Register(srcTmp), dest)) ⇒ producers(srcTmp) match {
+          case Instruction("slti", Seq(Register(srcTmp2), opA, opB)) if srcTmp == srcTmp2 && opA != srcTmp && opB != srcTmp ⇒
+            Instruction("blt", Seq(opA, opB, dest))
+          case _ ⇒ s
+        }
+        case s ⇒ s
+      })
+    }
+    Program(ret)
+  }
+
   def simplyfyOperands(prg: Program) = mapOperands(prg) {
     case IndexedAddress(offset, Register("gp")) ⇒ offset
     case AssemblerFunction("gp_rel", o)         ⇒ o
