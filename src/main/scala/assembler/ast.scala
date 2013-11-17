@@ -38,7 +38,7 @@ object ast {
     }
     def outputOperands: Seq[Operand] = this match {
       case Instruction(inst, _) if Set("jal", "jalr")(inst) ⇒ Seq(Register("v0"), Register("v1"), Register("ra"))
-      case Instruction(inst, _) if Set("j", "jr", "beq", "beqz", "bne", "bnez", "bltz", "ble", "blez", "bge", "bgez", "blt")(inst) ⇒ Seq.empty
+      case Instruction(inst, _) if Set("j", "b", "jr", "beq", "beqz", "bne", "bnez", "bltz", "ble", "blez", "bge", "bgez", "blt")(inst) ⇒ Seq.empty
       case Instruction(inst, Seq(_, o)) if Set("sw", "sh", "sb", "swc1", "mtc1")(inst) ⇒ Seq(o)
       case Instruction(inst, Seq(o, _)) if Set("lw", "lwc1", "lh", "lhu", "lb", "lbu", "move", "la", "li", "lui", "not", "cvt.s.w", "cvt.w.s", "mfc1")(inst) ⇒ Seq(o)
       case Instruction(inst, Seq(o, _, _)) if Set("add", "add.s", "addiu", "addi", "sub", "andi", "sll", "sra", "subu", "subi", "slt", "slti", "sltu", "addu", "mul", "mul.s", "div", "div.s")(inst) ⇒ Seq(o)
@@ -52,7 +52,7 @@ object ast {
     }
     def inputOperands: Seq[Operand] = this match {
       case Instruction(inst, ops) if Set("jal", "jalr")(inst) ⇒ ops ++ (Seq("a0", "a1", "a2", "a3", "f12", "f13", "f14", "f15") map { Register(_) })
-      case Instruction(inst, ops) if Set("j", "jr", "beq", "beqz", "bne", "bnez", "bltz", "ble", "blez", "bge", "bgez", "blt")(inst) ⇒ ops
+      case Instruction(inst, ops) if Set("j", "b", "jr", "beq", "beqz", "bne", "bnez", "bltz", "ble", "blez", "bge", "bgez", "blt")(inst) ⇒ ops
       case Instruction(inst, Seq(i, IndexedAddress(offset, base))) if Set("sw", "sh", "sb", "swc1")(inst) ⇒ Seq(i, offset, base)
       case Instruction(inst, Seq(_, IndexedAddress(offset, base))) if Set("lw", "lh", "lb", "lhu", "lbu")(inst) ⇒ Seq(offset, base)
       case Instruction(inst, Seq(i, _)) if Set("sw", "sh", "sb", "swc1", "mtc1")(inst) ⇒ Seq(i)

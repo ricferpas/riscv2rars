@@ -404,10 +404,11 @@ object transforms {
             s match {
               case Label(l) if visited(l) ⇒
                 debug.p("Found visited " + l); stop = true
-              case Label(l)                               ⇒ visited += l
-              case Instruction("jr", Seq(Register("ra"))) ⇒ used = Register(reg).isProcOutput | Register(reg).isCalleeSaved
-              case Instruction("jr", _)                   ⇒ used = true // No se sabe
-              case Instruction("j", Seq(LabelRef(l)))     ⇒ next = prg.findLabel(l)
+              case Label(l)                                  ⇒ visited += l
+              case Instruction("jr", Seq(Register("ra")))    ⇒ used = Register(reg).isProcOutput | Register(reg).isCalleeSaved
+              case Instruction(i, _) if Set("jr", "jalr")(i) ⇒ used = true // No se sabe
+              case Instruction("j", Seq(LabelRef(l)))        ⇒ next = prg.findLabel(l)
+              case Instruction("b", Seq(LabelRef(l)))        ⇒ next = prg.findLabel(l)
               case Instruction("jal", Seq(LabelRef(l))) ⇒ {
                 if (Register(reg).isProcInput) used = true
                 if (!Register(reg).isCalleeSaved) stop = true
