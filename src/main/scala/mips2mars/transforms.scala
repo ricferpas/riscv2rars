@@ -3,6 +3,7 @@ package mips2mars
 import scala.collection.mutable.Buffer
 import assembler._
 import ast._
+import util.misc._
 import util.debug
 
 object transforms {
@@ -59,7 +60,7 @@ object transforms {
     Program(ret)
   }
 
-  def removeDirectives(prg: Program, directives: Set[String] = Set("set", "mask", "fmask", "frame", "cfi_sections", "cfi_startproc", "cfi_endproc", "cfi_def_cfa_offset", "cfi_offset", "ent", "type", "end", "previous", "size", "file", "loc", "local")) =
+  def removeDirectives(prg: Program, directives: Set[String] = Set("set", "mask", "fmask", "frame", "cfi_sections", "cfi_startproc", "cfi_endproc", "cfi_def_cfa_offset", "cfi_offset", "ent", "type", "end", "previous", "size", "local")) =
     Program(prg.statements filter { s ⇒ s match { case Directive(d, _) if (directives contains d) ⇒ false case _ ⇒ true } })
 
   def removeComments(prg: Program) =
@@ -451,6 +452,46 @@ object transforms {
       if (useful) ret += s
       else debug.p("DCE descartada " + s)
       it = it.tail
+    }
+    Program(ret)
+  }
+
+  def warning(e: String) {
+    Console.withOut(Console.err) { println(e) }
+  }
+
+  def addSourceComments(prg: Program) = {
+    val it = prg.statements.iterator
+    val ret = Buffer[Statement]()
+    var curr = Seq.empty[(Int, Int)]
+    var files = Map.empty[Int, IndexedSeq[String]]
+    def addFile(id: Int, fname: String) = try {
+      files = files + id → (IndexedSeq.empty ++ io.Source.fromFile(fname).getLines.map { s ⇒ if (s.length >= 2 && s.substring(0, 2) == "  ") s.substring(2) else s })
+    } catch {
+      case e: java.io.FileNotFoundException ⇒ warning(s"Source file no encontrado: $fname")
+    }
+    def getLine(f: Int, l: Int) = try files(f)(l - 1) catch {
+      case e: NoSuchElementException    ⇒ ""
+      case e: IndexOutOfBoundsException ⇒ ""
+    }
+    while (it.hasNext) {
+      val s = it.next
+      s match {
+        case Directive("file", Seq(IntegerConst(id), StringConst(fname))) ⇒ addFile(id.toInt, fname)
+        case Directive("loc", Seq(IntegerConst(file), IntegerConst(line), _)) ⇒ curr = curr :+ (file.toInt, line.toInt)
+        case Directive("loc", Seq(IntegerConst(file), IntegerConst(line), _, _)) ⇒ curr = curr :+ (file.toInt, line.toInt)
+        case Directive(_, _) ⇒ ret += s
+        case _ ⇒ {
+          ret += s
+          if (!curr.isEmpty) {
+            curr.sorted.filterDuplicates foreach {
+              case (f, l) ⇒
+                ret += Comment(f"$l%4d ${getLine(f, l)} ", true)
+            }
+            curr = Seq.empty
+          }
+        }
+      }
     }
     Program(ret)
   }

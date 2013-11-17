@@ -28,7 +28,8 @@ object passes {
     Pass("renameLabels", renameLabels),
     Pass("asciizSpaceDirective", asciizSpaceDirective),
     Pass("addEmptyLines", addEmptyLines),
-    Pass("DCE", DCE))
+    Pass("DCE", DCE),
+    Pass("addSourceComments", addSourceComments))
 }
 
 object Main extends App {

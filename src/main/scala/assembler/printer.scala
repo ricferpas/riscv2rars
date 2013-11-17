@@ -15,6 +15,8 @@ object printer {
       val s = it.next
       sb ++= format(s)
       if (it.hasNext) (s, it.head) match {
+        case (Comment(_, true), Comment(_, true))            ⇒ sb ++= "\n\t\t\t"
+        case (Comment(_, _), Comment(_, true))            ⇒ sb += '\n'
         case (_, Comment(_, true))                        ⇒
         case (Label(s), _) if s.matches("B[0-9]+_[0-9]+") ⇒
         case (_, _)                                       ⇒ sb += '\n'
