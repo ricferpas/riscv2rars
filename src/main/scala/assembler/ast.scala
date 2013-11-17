@@ -41,7 +41,7 @@ object ast {
       case Instruction(inst, _) if Set("j", "jr", "beq", "beqz", "bne", "bnez", "bltz", "ble", "blez", "bge", "bgez", "blt")(inst) ⇒ Seq.empty
       case Instruction(inst, Seq(_, o)) if Set("sw", "sh", "sb", "swc1", "mtc1")(inst) ⇒ Seq(o)
       case Instruction(inst, Seq(o, _)) if Set("lw", "lwc1", "lh", "lhu", "lb", "lbu", "move", "la", "li", "lui", "not", "cvt.s.w", "cvt.w.s", "mfc1")(inst) ⇒ Seq(o)
-      case Instruction(inst, Seq(o, _, _)) if Set("add", "add.s", "addiu", "addi", "sub", "andi", "sll", "sra", "subu", "subi", "slti", "sltu", "addu", "mul", "mul.s", "div", "div.s")(inst) ⇒ Seq(o)
+      case Instruction(inst, Seq(o, _, _)) if Set("add", "add.s", "addiu", "addi", "sub", "andi", "sll", "sra", "subu", "subi", "slt", "slti", "sltu", "addu", "mul", "mul.s", "div", "div.s")(inst) ⇒ Seq(o)
       case Instruction("nop", _) ⇒ Seq.empty
       case Instruction("syscall", _) ⇒ Seq(Register("v0"), Register("a0"), Register("a1")) // FIXME
       case Directive(_, _) ⇒ Seq.empty
@@ -57,7 +57,7 @@ object ast {
       case Instruction(inst, Seq(_, IndexedAddress(offset, base))) if Set("lw", "lh", "lb", "lhu", "lbu")(inst) ⇒ Seq(offset, base)
       case Instruction(inst, Seq(i, _)) if Set("sw", "sh", "sb", "swc1", "mtc1")(inst) ⇒ Seq(i)
       case Instruction(inst, Seq(_, i)) if Set("lw", "lwc1", "lh", "lhu", "lb", "lbu", "move", "la", "li", "lui", "not", "cvt.s.w", "cvt.w.s", "mfc1")(inst) ⇒ Seq(i)
-      case Instruction(inst, Seq(_, a, b)) if Set("add", "add.s", "addiu", "addi", "sub", "andi", "sll", "sra", "subu", "subi", "slti", "sltu", "addu", "mul", "mul.s", "div", "div.s")(inst) ⇒ Seq(a, b)
+      case Instruction(inst, Seq(_, a, b)) if Set("add", "add.s", "addiu", "addi", "sub", "andi", "sll", "sra", "subu", "subi", "slt", "slti", "sltu", "addu", "mul", "mul.s", "div", "div.s")(inst) ⇒ Seq(a, b)
       case Instruction("nop", _) ⇒ Seq.empty
       case Instruction("syscall", _) ⇒ Seq(Register("v0"), Register("a0"), Register("a1"), Register("a2"), Register("a3"))
       case Directive(_, _) ⇒ Seq.empty
