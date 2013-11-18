@@ -466,7 +466,7 @@ object transforms {
                 exploreLabel(l); debug.p("continuing after " + s)
               case Instruction(i, Seq(_, LabelRef(l))) if Set("beqz", "bnez", "bltz", "bgez", "bgtz", "blez", "bgez", "blez")(i) ⇒
                 exploreLabel(l); debug.p("continuing after " + s)
-              case Instruction(i, _) if Set("sw", "swc1", "lw", "lwc1", "li", "la", "move", "andi", "add", "add.s", "sub", "sll", "srl", "sra", "sb", "lb", "lbu", "subu", "subi", "slti", "slt", "sltu", "addu", "addiu", "mul", "mul.s", "not", "syscall", "lui", "div", "div.s", "addi", "cvt.s.w", "cvt.w.s", "mfc1", "mtc1")(i) ⇒
+              case Instruction(i, _) if Set("sw", "swc1", "sdc1", "lw", "lwc1", "ldc1", "li", "la", "move", "andi", "add", "add.s", "sub", "sll", "srl", "sra", "sb", "lb", "lbu", "subu", "subi", "slti", "slt", "sltu", "addu", "addiu", "mul", "mul.s", "not", "syscall", "lui", "div", "div.s", "addi", "cvt.s.w", "cvt.w.s", "trunc.w.s", "mfc1", "mtc1", "movn", "movz", "xor", "or", "and", "ori")(i) ⇒
               case Instruction("nop", _) ⇒
               case EmptyLine ⇒
               case Directive(_, _) ⇒
