@@ -1,0 +1,12 @@
+Este programa está escrito en Scala. Para compilarlo, es suficiente con tener instalado el programa “sbt” versión 0.12*, el cual se puede obtener de los repositorios de cualquier distribución o de http://www.scala-sbt.org/.
+
+* (a lo mejor funciona con la 0.11 también)
+
+Con “sbt compile” se compila. Hay un script “mips2mars-sbt” para ejecutar el resultado.
+
+Con “sbt proguard” se genera un jar que depende sólo del runtime de java, y el cual se puede ejecutar con el script “mips2mars”. Es suficiente con copiar los ficheros target/scala-2.10/mips2mars_2.10-0.1-SNAPSHOT.min.jar y mips2mars a algún directorio que esté en el PATH (e.g.: /usr/local/bin/) para instalar el programa.
+
+Notas sobre el compilador de C:
+
+ - La idea de este programa es coger el código MIPS generado por un compilador normal y corriente para mipsel y generar un programa legible y ejecutable por Mars. Se ha probado que funciona con la salida de clang 3.3, con otros compiladores seguramente habría que hacer algún cambio y el resultado sería probablemente menos claro.
+ - El clang que viene con las distribuciones puede no tener el soporte para MIPS compilado. Al menos, esto es lo que pasa en Fedora. Por tanto, habría que instalarlo desde la página del proyecto. En http://llvm.org/releases/download.html#3.3 está disponible tanto el código fuente como binarios ya compilados.
