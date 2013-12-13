@@ -345,6 +345,8 @@ object transforms {
           indexedName("jump_table")
         } else if (l matches """\$BB.*""") {
           l.substring(2)
+        } else if (l matches """\$.+""") {
+          l.substring(1)
         } else l
       while ((usedLabels contains sub) && (sub != l)) sub = sub + "X"
       usedLabels += sub
