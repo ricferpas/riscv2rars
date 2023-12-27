@@ -16,8 +16,8 @@ object parser extends RegexParsers {
     integer | real | character
 
   val integer =
-    """0x[\da-zA-Z]+""".r ^^ { s => IntegerConst(java.lang.Long.parseLong(s.drop(2), 16)) } |
-      """-?\d+""".r ^^ { s => IntegerConst(s.toLong) }
+    """0x[\da-zA-Z]+""".r ^^ { s => IntegerConst(java.lang.Long.parseLong(s.drop(2), 16), 16) } |
+      """-?\d+""".r ^^ { s => IntegerConst(s.toLong, 10) }
 
   val real =
     """-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""".r ^^ { s => FloatConst(s.toDouble) }

@@ -37,8 +37,8 @@ object printer {
   }
 
   def formatHex(op: Operand): String = op match {
-    case IntegerConst(value) => f"0x$value%08x"
-    case _                   => format(op)
+    case IntegerConst(value, _) => f"0x$value%08x"
+    case _ => format(op)
   }
 
   var octalQuotes = false
@@ -56,7 +56,9 @@ object printer {
     op match {
       case Register(name)                   => name
       case LabelRef(name)                   => name
-      case IntegerConst(value)              => value.toString
+      case IntegerConst(value, 10)          => value.toString
+      case IntegerConst(value, 16)          => f"0x${value}%x"
+      case IntegerConst(value, _)           => ??? // TODO: implement other bases?
       case FloatConst(value)                => value.toString
       case StringConst(value)               => "	\"" + (for (c <- value) yield quoteChar(c)).mkString + "\""
       case CharConst(value)                 => "	\'" + quoteChar(value) + "\'"

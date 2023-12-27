@@ -101,7 +101,7 @@ object ast {
   case class AssemblerFunction(name: String, operand: Operand) extends Operand
 
   sealed abstract class Literal extends Operand
-  case class IntegerConst(value: Long) extends Literal
+  case class IntegerConst(value: Long, base: Int) extends Literal
   case class FloatConst(value: Double) extends Literal
   case class StringConst(value: String) extends Literal
   case class CharConst(value: Char) extends Literal

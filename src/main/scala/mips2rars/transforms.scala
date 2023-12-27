@@ -82,8 +82,8 @@ object transforms {
       case Directive(d, LabelRef(name) :: size :: rest) if Set("comm", "lcomm") contains d =>
         new_data += Label(name)
         rest match {
-          case IntegerConst(align) :: _ =>
-            new_data += Directive("align", Seq(IntegerConst(align match { case 1 => 0 case 2 => 1 case 3 => 2 case 4 => 2 case _ => 3 })))
+          case IntegerConst(align, albase) :: _ =>
+            new_data += Directive("align", Seq(IntegerConst(align match { case 1 => 0 case 2 => 1 case 3 => 2 case 4 => 2 case _ => 3 }, albase)))
           case _                        =>
         }
         new_data += Directive("space", Seq(size))
@@ -209,7 +209,7 @@ object transforms {
 
   def addSimplePseudoinstructions(prg: Program) = {
     Program(prg.statements map {
-      case Instruction("addi", Seq(Register(regDst), Register("zero"), IntegerConst(imm))) => Instruction("li", Seq(Register(regDst), IntegerConst(imm)))
+      case Instruction("addi", Seq(Register(regDst), Register("zero"), IntegerConst(imm, immb))) => Instruction("li", Seq(Register(regDst), IntegerConst(imm, immb)))
       case Instruction("beq", Seq(Register(srcDst), Register("zero"), dest)) => Instruction("beqz", Seq(Register(srcDst), dest))
       case Instruction("bne", Seq(Register(srcDst), Register("zero"), dest)) => Instruction("bnez", Seq(Register(srcDst), dest))
       case Instruction("jr", Seq(Register(r))) if Set("ra", "x1") contains r => Instruction("ret", Seq())
@@ -273,8 +273,8 @@ object transforms {
     Program(prg.statements map {
       case Directive("4byte", ops) => Directive("word", ops map removeParenthesis)
       case Directive("asciz", ops) => Directive("asciiz", ops)
-      case Directive("zero", Seq(IntegerConst(n))) => Directive("space", Seq(IntegerConst(n)))
-      case Directive("set", Seq(LabelRef(l), ArithExpression("+", LabelRef("."), IntegerConst(0)))) => Label(l)
+      case Directive("zero", Seq(IntegerConst(n,nb))) => Directive("space", Seq(IntegerConst(n,nb)))
+      case Directive("set", Seq(LabelRef(l), ArithExpression("+", LabelRef("."), IntegerConst(0, _)))) => Label(l)
       case Directive("section", LabelRef(".text.startup") :: _) => Directive("text", Seq())
       case s => s
     })
@@ -396,7 +396,7 @@ object transforms {
       case Directive("asciiz", Seq(StringConst(re(s)))) =>
         val bytes = s.getBytes("UTF-8")
         val numZeros = bytes.length - bytes.lastIndexWhere(_ != 0) - 1 // no contar el \0 final, ya incluido al usar asciiz
-        if (numZeros > 30) Seq(Directive("asciiz", Seq(StringConst(new String(bytes, 0, bytes.length - numZeros, "UTF-8")))), Directive("space", Seq(IntegerConst(numZeros))))
+        if (numZeros > 30) Seq(Directive("asciiz", Seq(StringConst(new String(bytes, 0, bytes.length - numZeros, "UTF-8")))), Directive("space", Seq(IntegerConst(numZeros, 10))))
         else Seq(Directive("asciiz", Seq(StringConst(s))))
       case s => Seq(s)
     })
@@ -511,9 +511,9 @@ object transforms {
     while (it.hasNext) {
       val s = it.next()
       s match {
-        case Directive("file", Seq(IntegerConst(id), StringConst(fname))) => addFile(id.toInt, fname)
-        case Directive("loc", Seq(IntegerConst(file), IntegerConst(line), _)) => curr = curr :+ (file.toInt, line.toInt)
-        case Directive("loc", Seq(IntegerConst(file), IntegerConst(line), _, _)) => curr = curr :+ (file.toInt, line.toInt)
+        case Directive("file", Seq(IntegerConst(id, _), StringConst(fname))) => addFile(id.toInt, fname)
+        case Directive("loc", Seq(IntegerConst(file, _), IntegerConst(line, _), _)) => curr = curr :+ (file.toInt, line.toInt)
+        case Directive("loc", Seq(IntegerConst(file, _), IntegerConst(line, _), _, _)) => curr = curr :+ (file.toInt, line.toInt)
         case Directive(_, _) => ret += s
         case _ =>
           ret += s
