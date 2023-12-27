@@ -1,5 +1,5 @@
 /*
-  Librería para emular las llamadas al sistema ofrecidas por MARS (y SPIM)
+  Librería para emular las llamadas al sistema ofrecidas por RARS (y SPIM)
  */
 
 #ifndef MIPSRUNTIME_H_
@@ -37,6 +37,7 @@ read integer
 
 $v0 contains integer read
 */
+int read_integer(void);
 
 /*
 read float
@@ -70,6 +71,7 @@ $v0 contains address of allocated memory
 exit (terminate execution)
 10
 */
+void mips_exit(int exitcode);
 
 /*
 print character
@@ -127,10 +129,35 @@ $a0 = low order 32 bits of system time $a1 = high order 32 bits of system time.
 unsigned long long get_time(void);
 
 /*
+sleep
+32
+ */
+void system_sleep(int ms);
+
+/*
 clear screen
 39
  */
 void clear_screen(void);
+
+
+/*
+random int
+41
+$a0 = i.d. of pseudorandom number generator (any int).
+$a0 contains the next pseudorandom, uniformly distributed int value from this random number generator's sequence.
+*/
+int random_int(int id);
+
+/*
+random int range
+42
+$a0 = i.d. of pseudorandom number generator (any int). $a1 = upper bound of range of returned values.
+$a0 contains pseudorandom, uniformly distributed int value in the range 0 = [int] [upper bound], drawn from this random number generator's sequence. 
+*/
+int random_int_range(int id, int max);
+
+//void *memcpy(void *dest, const void *src, size_t n);
 
 #ifndef NULL
 #define NULL ((void *)0)

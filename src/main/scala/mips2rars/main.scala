@@ -1,8 +1,7 @@
-package mips2mars
+package mips2rars
 
 import java.io.FileOutputStream
 import assembler._
-import ast._
 import transforms._
 import passes._
 
@@ -10,28 +9,27 @@ object passes {
   case class Pass(name: String, transform: Transform)
   val allPasses = Seq(
     Pass("addRuntime", addRuntime),
+    Pass("simplyfyDirectives", simplyfyDirectives),
     Pass("removeSections", removeSections(_)),
     Pass("removeComments", removeComments),
     Pass("removeDirectives", removeDirectives(_)),
     Pass("removeGlobl", removeGlobl),
-    Pass("removeDelaySlot", removeDelaySlot),
     Pass("simplifyData", simplifyData),
-    Pass("removeUnusedLabels", removeUnusedLabels),
+//    Pass("removeUnusedLabels", removeUnusedLabels),
     Pass("renameRegisters", renameRegisters),
     Pass("groupSections", groupSections),
     Pass("removeAlignFromText", removeAlignFromText),
-    Pass("simplyfyOperands", simplyfyOperands),
-    Pass("simplyfyDirectives", simplyfyDirectives),
-    Pass("addLuiPseudoinstructions", addLuiPseudoinstructions),
+//    Pass("simplyfyOperands", simplyfyOperands),
+    Pass("addAddressPseudoinstructions", addAddressPseudoinstructions),
     Pass("addSimplePseudoinstructions", addSimplePseudoinstructions),
     //Pass("addComplexPseudoinstructions", addComplexPseudoinstructions),
-    Pass("avoidRegisterAt", avoidRegisterAt),
     Pass("fixStrings", fixStrings),
     Pass("renameLabels", renameLabels),
     Pass("asciizSpaceDirective", asciizSpaceDirective),
     Pass("addEmptyLines", addEmptyLines),
-    Pass("DCE", DCE),
-    Pass("addSourceComments", addSourceComments))
+    //Pass("DCE", DCE),
+    Pass("addSourceComments", addSourceComments)
+  )
 }
 
 object Main extends App {
@@ -40,12 +38,12 @@ object Main extends App {
   var debugPassesPrefix: Option[String] = None
   var debugPasses = false
   def debugPassFilename(id: String) = debugPassesPrefix match {
-    case Some(p) ⇒ s"${p}-${id}.s"
-    case None    ⇒ s"${outputFile.get}-${id}.s"
+    case Some(p) => s"${p}-${id}.s"
+    case None    => s"${outputFile.get}-${id}.s"
   }
   var disabledPasses = Set.empty[String]
 
-  def error(e: String) {
+  private def error(e: String): Unit = {
     Console.withOut(Console.err) { println(e) }
     sys.exit(1)
   }
@@ -55,28 +53,27 @@ object Main extends App {
   val re_disable_pass = "--disable-pass=(.+)".r
   val re_any_option = "--(.+)".r
   args.toSeq.foreach {
-    case "--list-passes" ⇒ {
-      allPasses foreach { p ⇒ println(p.name) }
+    case "--list-passes" =>
+      allPasses foreach { p => println(p.name) }
       sys.exit(0)
+    case "--debug-passes"   => debugPasses = true
+    case re_debug_prefix(p) => debugPassesPrefix = Some(p)
+    case re_output_file(f) => outputFile match {
+      case None    => outputFile = Some(f)
+      case Some(_) => error("Más de un fichero de salida especificado.")
     }
-    case "--debug-passes"   ⇒ debugPasses = true
-    case re_debug_prefix(p) ⇒ debugPassesPrefix = Some(p)
-    case re_output_file(f) ⇒ outputFile match {
-      case None    ⇒ outputFile = Some(f)
-      case Some(_) ⇒ error("Más de un fichero de salida especificado.")
-    }
-    case re_disable_pass(p) if (allPasses map (_.name)) contains p ⇒ disabledPasses += p
-    case re_any_option(o) ⇒ error(s"Opción desconocida $o")
-    case f ⇒ inputFile match {
-      case None    ⇒ inputFile = Some(f)
-      case Some(x) ⇒ error(s"Más de un fichero de entrada especificado «$x» y después «$f».")
+    case re_disable_pass(p) if (allPasses map (_.name)) contains p => disabledPasses += p
+    case re_any_option(o) => error(s"Opción desconocida $o")
+    case f => inputFile match {
+      case None    => inputFile = Some(f)
+      case Some(x) => error(s"Más de un fichero de entrada especificado «$x» y después «$f».")
     }
   }
 
-  if (debugPasses && debugPassesPrefix == None && outputFile == None)
+  if (debugPasses && debugPassesPrefix.isEmpty && outputFile.isEmpty)
     error("--debug-passes sin --debug-prefix= ni --output=.")
 
-  if (inputFile == None) error("Fichero de entrada no especificado.")
+  if (inputFile.isEmpty) error("Fichero de entrada no especificado.")
   val p0 = ast.Program.fromFile(inputFile.get)
   if (debugPasses) {
     val out = new FileOutputStream(debugPassFilename("00-initial"))
@@ -84,8 +81,8 @@ object Main extends App {
     finally out.close()
   }
 
-  val result = allPasses.filter { case Pass(n, _) ⇒ !(disabledPasses contains n) }.zipWithIndex.foldLeft(p0) {
-    case (acc, (passes.Pass(name, fn), idx)) ⇒ {
+  val result = allPasses.filter { case Pass(n, _) => !(disabledPasses contains n) }.zipWithIndex.foldLeft(p0) {
+    case (acc, (passes.Pass(name, fn), idx)) =>
       val q = fn(acc)
       if (debugPasses) {
         val out = new FileOutputStream(debugPassFilename(f"${idx + 1}%02d-$name"))
@@ -93,13 +90,17 @@ object Main extends App {
         finally out.close()
       }
       q
-    }
   }
 
   val out = outputFile match {
-    case Some(n) ⇒ new FileOutputStream(n)
-    case None    ⇒ Console.out
+    case Some(n) => new FileOutputStream(n)
+    case None => Console.out
   }
-  try Console.withOut(out) { println(printer.format(result)) }
-  finally outputFile map { n ⇒ out.close() }
+  try Console.withOut(out) {
+    println(printer.format(result))
+  }
+  finally outputFile match {
+    case Some(_) => out.close()
+    case None =>
+  }
 }

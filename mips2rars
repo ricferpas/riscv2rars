@@ -1,0 +1,27 @@
+#!/bin/bash
+SCRIPTDIR="$(dirname "$(readlink -fm $0)")"
+
+J="mips2rars.jar"
+F="${SCRIPTDIR}/${J}"
+(
+    cd "$SCRIPTDIR"
+    make -q "$J" &> /dev/null || {
+        if which sbt &> /dev/null ; then
+            echo "jar no encontrado o desactualizado, compilando…" 2>&1 
+            cd "$SCRIPTDIR"
+            make "$J"
+        else
+            echo "sbt no encontrado, no se puede compilar mips2rars" 2>&1 
+            echo "sbt se puede obtener de https://www.scala-sbt.org/" 2>&1 
+            exit 1
+        fi
+    }
+) || exit $?
+
+if which scala &> /dev/null ; then
+    exec scala "$F" $@
+else
+    WORK_DIR="$(pwd)"
+    cd "$SCRIPTDIR"
+    sbt "set fork in run := true" "set baseDirectory in run := file(\"${WORK_DIR}\")" "run $(echo $@)"
+fi

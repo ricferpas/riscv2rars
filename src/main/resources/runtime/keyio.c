@@ -70,7 +70,8 @@ keyio_peek_key (void) {
 
 /**
  * Devuelve la última tecla pulsada por el usuario que no ha sido
- * leída, se bloquea si no se había pulsado ninguna.
+ * leída, se bloquea si no se había pulsado ninguna. Devuelve -1 si no
+ * se ha podido leer la tecla.
  */
 int
 keyio_read_key (void) {
@@ -91,12 +92,16 @@ keyio_read_key (void) {
   tcsetattr(0, TCSANOW, &tcattr_new);
 
   char ch;
-  read (0, &ch, 1);
+  int nread = read (0, &ch, 1);
   
   tcattr_new.c_cc[VMIN] = 0;
   tcsetattr (0, TCSANOW, &tcattr_new);
   
-  return ch;
+  if (nread > 0) {
+    return ch;
+  } else {
+    return -1;
+  }
 }
 
 /**

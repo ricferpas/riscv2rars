@@ -3,78 +3,99 @@
         .text
         
 print_integer:
-        li      $v0, 1
-        syscall
-        jr      $ra        
-        nop
-        
-read_string:
-        li      $v0, 8
-        syscall
-        jr      $ra        
-        nop
+        li      a7, 1
+        ecall
+        ret        
+       
+read_integer:
+        li      a7, 5
+        ecall
+        ret        
+
+#read_string:
+#        li      a7, 8
+#        ecall
+#        ret        
 
 print_character:
-        li      $v0, 11
-        syscall
-        jr      $ra        
-        nop
+        li      a7, 11
+        ecall
+        ret
+
 
 print_string:
-        li      $v0, 4
-        syscall
-        jr      $ra        
-        nop
+        li      a7, 4
+        ecall
+        ret        
 
 get_time:
-        li      $v0, 30
-        syscall
-        move    $v0, $a0
-        move    $v1, $a1
-        jr      $ra
-        nop
-        
+        li      a7, 30
+        ecall
+        ret
+
+system_sleep:
+        li      a7, 32
+        ecall
+        ret
+
 read_character:
-        li      $v0, 12
-        syscall
-        jr      $ra
-        nop
+        li      a7, 12
+        ecall
+        ret
 
 clear_screen:
-        li      $v0, 39
-        syscall
-        jr      $ra
-        nop
+        li      a7, 39
+        ecall
+        ret
 
 mips_exit:
-        li      $v0, 17
-        syscall
-        jr      $ra
-        nop
+        li      a7, 93
+        ecall
+        ret
 
 random_int:     
-        li      $v0, 41
-        syscall
-        move    $v0, $a0
-        jr      $ra
-        nop
+        li      a7, 41
+        ecall
+        ret
 
 random_int_range:
-        li      $v0, 42
-        syscall
-        move    $v0, $a0
-        jr      $ra
-        nop
-
-keyio_poll_key:
-        li      $v0, 0
-        lb      $t0, 0xffff0000                 # carga registro de control del receptor
-        andi    $t0, $t0, 0x00000001            # mira el bit 0
-        beqz    $t0, keyio_poll_key_return      # si no hay nada disponible, devuelve 0.
-        nop
-        lb      $v0, 0xffff0004                 # lee carácter del registro de datos del receptor
-keyio_poll_key_return:
-        jr      $ra
-        nop
+        li      a7, 42
+        ecall
+        ret
 
         
+keyio_poll_key:
+        li      a0, 0
+        lb      a1, 0xffff0000                 # carga registro de control #del receptor
+        andi    a2, a1, 0x00000001            # mira el bit 0
+        beqz    a2, keyio_poll_key_return      # si no hay nada disponible, #devuelve 0.
+        lb      a0, 0xffff0004                 # lee carácter del registro de #datos del receptor
+        andi    a2, a1, 0xfffffffe
+        sb      a2, 0xffff0000, a3              # pone a 0 el bit 0 del registro de control
+keyio_poll_key_return:
+        ret
+
+memcpy:
+        mv      a3, a0
+memcpy_loop:
+        beqz    a2, memcpy_return
+        lbu     t0, 0(a1)
+        sb      t0, 0(a3)
+        addi    a3, a3, 1
+        addi    a1, a1, 1
+        addi    a2, a2, -1
+        j       memcpy_loop
+memcpy_return:
+        ret
+
+#memset:
+#        move    $v0, $a0
+#memset_loop:
+#        beqz    $a2, memset_return
+#        sb      $a1, 0($a0)
+#        addiu   $a0, $a0, 1
+#        addiu   $a2, $a2, -1
+#        j       memset_loop
+#memset_return:
+#        ret
+#        

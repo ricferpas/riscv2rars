@@ -1,4 +1,4 @@
-package mips2mars
+package mips2rars
 
 import java.io.FileOutputStream
 import assembler._
@@ -18,7 +18,6 @@ class Test1 extends App {
     ("removeSections", removeSections(_)),
     ("removeComments", removeComments),
     ("removeDirectives", removeDirectives(_)),
-    ("removeDelaySlot", removeDelaySlot),
     ("simplifyData", simplifyData),
     ("removeUnusedLabels", removeUnusedLabels),
     ("renameRegisters", renameRegisters),
@@ -26,13 +25,12 @@ class Test1 extends App {
     ("removeAlignFromText", removeAlignFromText),
     ("simplyfyOperands", simplyfyOperands),
     ("simplyfyDirectives", simplyfyDirectives),
-    ("addLuiPseudoinstructions", addLuiPseudoinstructions),
-    ("avoidRegisterAt", avoidRegisterAt),
+    ("addAddressPseudoinstructions", addAddressPseudoinstructions),
     ("fixStrings", fixStrings),
     ("renameLabels", renameLabels),
     ("addEmptyLines", addEmptyLines))
     .zipWithIndex.foldLeft(p0) {
-      case (acc, ((name, fn), idx)) ⇒ {
+      case (acc, ((name, fn), idx)) => {
         val q = fn(acc)
         val out = new FileOutputStream(outputFilename(f"${idx + 1}%02d-$name"))
         Console.withOut(out) { println(printer.format(q)) }

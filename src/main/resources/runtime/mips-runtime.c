@@ -1,9 +1,11 @@
-
 #include "mips-runtime.h"
+
+#define _GNU_SOURCE // necesario para nanosleep
 
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include <sys/time.h>
 #include "keyio.h"
 
@@ -23,6 +25,18 @@ static void enable_keyio(void) {
 
 void print_integer(int a0) {
   printf("%d", a0);
+}
+
+int read_integer(void) {
+  char buff[512];
+  read_string(buff, sizeof(buff));
+  char* end;
+  long i = strtol(buff, &end, 10);
+  if (!end || buff == end) {
+    printf("\nError leyendo de la entrada estándar.\n");
+    exit(-1);
+  }
+  return i;
 }
 
 void read_string(char *a0, int a1) {
@@ -52,9 +66,24 @@ unsigned long long get_time(void) {
   return ret;
 }
 
+void system_sleep(int ms) {
+  struct timespec ts = {
+    .tv_sec = ms / 1000,
+    .tv_nsec = (ms % 1000) * 1000000
+  };
+  nanosleep(&ts, NULL);
+}
+
 int read_character(void) {
   enable_keyio();
-  return keyio_read_key();
+  int k = keyio_read_key();
+  if (k < 0) {
+    printf("\nError leyendo de la entrada estándar.\n");
+    exit(-1);
+  } else {
+    putchar(k);
+    return k;
+  }
 }
 
 void clear_screen(void) {
@@ -71,7 +100,8 @@ int random_int(int id) {
   return rand();
 }
 
-/* ignora el id */
+/* ignora el id,
+   max no está incluído en el rango */
 int random_int_range(int id, int max) {
-  return random_int(id) % (max + 1); // TODO: +1 ? ver Mars
+  return random_int(id) % max;
 }

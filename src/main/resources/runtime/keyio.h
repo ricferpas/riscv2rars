@@ -6,7 +6,7 @@
   - Soporta acceso no bloqueante al teclado (polling).
 
   - Es necesario para emular con fidelidad algunas de las llamadas al
-    sistema de MARS.
+    sistema de RARS.
 */
 
 #ifndef _KEYIO_H_

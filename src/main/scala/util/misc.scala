@@ -5,8 +5,8 @@ object misc {
     def filterDuplicates: Seq[A] = new Iterator[A] {
       val seen = new collection.mutable.HashSet[A]
       var i = l.iterator
-      def next = {
-        val ret = i.next
+      def next() = {
+        val ret = i.next()
         seen += ret
         i = i.dropWhile(seen(_))
         ret
