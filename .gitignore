@@ -1,3 +1,4 @@
 .idea
+.bsp
 target
-mips2rars.jar
+riscv2rars.jar

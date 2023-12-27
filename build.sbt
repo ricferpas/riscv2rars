@@ -1,11 +1,11 @@
-//val myMainClass = Some("mips2rars.Test")
-val myMainClass = Some("mips2rars.Main")
+//val myMainClass = Some("riscv2rars.Test")
+val myMainClass = Some("riscv2rars.Main")
 
 Compile /  run / mainClass := myMainClass
 
 Compile / packageBin / mainClass := myMainClass
 
-name := "mips2rars"
+name := "riscv2rars"
 
 version := "0.1-SNAPSHOT"
 
@@ -13,7 +13,7 @@ scalaVersion := "2.13.10"
 
 scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
 
-Compile / doc / scalacOptions ++= Opts.doc.title("Mips2Rars") ++ Seq("-diagrams")
+Compile / doc / scalacOptions ++= Opts.doc.title("Riscv2Rars") ++ Seq("-diagrams")
 
 libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"
 

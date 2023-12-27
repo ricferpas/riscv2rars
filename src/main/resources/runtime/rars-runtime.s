@@ -48,7 +48,7 @@ clear_screen:
         ecall
         ret
 
-mips_exit:
+rars_exit:
         li      a7, 93
         ecall
         ret

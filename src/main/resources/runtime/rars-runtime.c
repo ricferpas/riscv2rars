@@ -1,4 +1,4 @@
-#include "mips-runtime.h"
+#include "rars-runtime.h"
 
 #define _GNU_SOURCE // necesario para nanosleep
 
@@ -46,7 +46,7 @@ void read_string(char *a0, int a1) {
     printf("\nError leyendo de la entrada estándar.\n");
     exit(-1);
   }
-  if (getenv("MIPS_ECHO")) {
+  if (getenv("RARS_ECHO")) {
     fputs(a0, stdout);
   }
 }
@@ -91,7 +91,7 @@ void clear_screen(void) {
   print_string("\x1b\x5b\x30\x3b\x30\x66");  
 }
 
-void mips_exit(int exitcode) {
+void rars_exit(int exitcode) {
   exit(exitcode);
 }
 

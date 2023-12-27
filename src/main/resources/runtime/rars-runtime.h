@@ -2,8 +2,8 @@
   Librería para emular las llamadas al sistema ofrecidas por RARS (y SPIM)
  */
 
-#ifndef MIPSRUNTIME_H_
-#define MIPSRUNTIME_H_
+#ifndef RARSRUNTIME_H_
+#define RARSRUNTIME_H_
 
 /*
 print integer
@@ -71,7 +71,7 @@ $v0 contains address of allocated memory
 exit (terminate execution)
 10
 */
-void mips_exit(int exitcode);
+void rars_exit(int exitcode);
 
 /*
 print character
@@ -163,4 +163,4 @@ int random_int_range(int id, int max);
 #define NULL ((void *)0)
 #endif
 
-#endif /* MIPSRUNTIME_H_ */
+#endif /* RARSRUNTIME_H_ */

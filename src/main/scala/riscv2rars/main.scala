@@ -1,4 +1,4 @@
-package mips2rars
+package riscv2rars
 
 import java.io.FileOutputStream
 import assembler._

@@ -1,4 +1,4 @@
-package mips2rars
+package riscv2rars
 
 import assembler.ast._
 import util.debug
@@ -384,7 +384,7 @@ object transforms {
   }
 
   def addRuntime(prg: Program) = {
-    val reader = new java.io.InputStreamReader(getClass.getResourceAsStream("/runtime/mips-runtime.s"))
+    val reader = new java.io.InputStreamReader(getClass.getResourceAsStream("/runtime/rars-runtime.s"))
     val runtime = Program.fromReader(reader)
     reader.close()
     Program(prg.statements ++ runtime.statements)
