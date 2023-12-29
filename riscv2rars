@@ -1,15 +1,15 @@
 #!/bin/bash
-SCRIPTDIR="$(dirname "$(readlink -fm $0)")"
 
-J="riscv2rars.jar"
-F="${SCRIPTDIR}/${J}"
+SCRIPTS_DIR="$(dirname "$(realpath "$0")")"
+LAUNCH_DIR="$(pwd)"
+
+JAR_FILE="riscv2rars.jar"
 (
-    cd "$SCRIPTDIR"
-    make -q "$J" &> /dev/null || {
+    cd "${SCRIPTS_DIR}/"
+    make -q "${JAR_FILE}" &> /dev/null || {
         if which sbt &> /dev/null ; then
             echo "jar no encontrado o desactualizado, compilando…" 2>&1 
-            cd "$SCRIPTDIR"
-            make "$J"
+            make --quiet "${JAR_FILE}"
         else
             echo "sbt no encontrado, no se puede compilar riscv2rars" 2>&1 
             echo "sbt se puede obtener de https://www.scala-sbt.org/" 2>&1 
@@ -18,10 +18,8 @@ F="${SCRIPTDIR}/${J}"
     }
 ) || exit $?
 
-if which scala &> /dev/null ; then
-    exec scala "$F" $@
-else
-    WORK_DIR="$(pwd)"
-    cd "$SCRIPTDIR"
-    sbt "set fork in run := true" "set baseDirectory in run := file(\"${WORK_DIR}\")" "run $(echo $@)"
-fi
+#MEM="$(printf "24576\n$(($(grep "MemTotal:" /proc/meminfo | head -n1 | tr -s " " | cut -d" " -f2) * 4 / 7 / 1024))\n" | sort -n | head -n1)"
+#export JAVA_OPTS="${JAVA_OPTS:-Xmx${MEM}m}"
+
+exec java -jar "${SCRIPTS_DIR}/${JAR_FILE}" "$@"
+
