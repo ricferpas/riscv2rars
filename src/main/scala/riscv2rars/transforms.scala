@@ -47,8 +47,14 @@ object transforms {
     }
   }
 
-  def removeDirectives(prg: Program, directives: Set[String] = Set("set", "mask", "fmask", "frame", "cfi_sections", "cfi_startproc", "cfi_endproc", "cfi_def_cfa_offset", "cfi_offset", "ent", "type", "end", "previous", "size", "local", "ident", "file", "option")) =
-    Program(prg.statements filter { s => s match {case Directive(d, _) if directives contains d => false case _ => true} })
+  def removeDirectives(prg: Program, directives: Set[String] = Set(
+    "set", "mask", "fmask", "frame", "cfi_sections", "cfi_startproc", "cfi_endproc", "cfi_def_cfa_offset", "cfi_offset",
+    "ent", "type", "end", "previous", "size", "local", "ident", "file", "option", "loc", "cfi_restore", "cfi_remember_state",
+    "cfi_restore_state", "attribute")): Program =
+    Program(prg.statements.filter(s => s match {
+      case Directive(d, _) if directives contains d => false
+      case _ => true
+    }))
 
   def removeGlobl(prg: Program) = Program(prg.statements filter {
     case Directive("globl", Seq(LabelRef("main"))) => true
@@ -59,7 +65,9 @@ object transforms {
   def removeComments(prg: Program) =
     Program(prg.statements filter { s => s match { case Comment(_, _) => false case _ => true } })
 
-  def removeSections(prg: Program, sections: Set[String] = Set(".debug_info", ".mdebug.abi32", ".debug_abbrev", ".debug_aranges", ".debug_macinfo", ".debug_line", ".debug_loc", ".debug_pubtypes", ".debug_str", ".debug_ranges")) = {
+  def removeSections(prg: Program, sections: Set[String] = Set(
+    ".debug_info", ".mdebug.abi32", ".debug_abbrev", ".debug_aranges", ".debug_macinfo", ".debug_line", ".debug_loc",
+    ".debug_pubtypes", ".debug_str", ".debug_ranges", ".debug_loclists", ".debug_rnglists", ".debug_line_str")): Program = {
     var section = ""
     val ret = mutable.Buffer.empty[Statement]
     prg.statements foreach { s =>

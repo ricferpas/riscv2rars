@@ -4,7 +4,7 @@ import ast._
 
 object printer {
 
-  def error(msg: Any) = sys.error(msg.toString)
+  def error(msg: Any): Nothing = sys.error(msg.toString)
 
   def indent = "\t"
 

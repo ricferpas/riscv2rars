@@ -13,7 +13,7 @@ object passes {
     Pass("removeSections", removeSections(_)),
     Pass("removeComments", removeComments),
     Pass("removeDirectives", removeDirectives(_)),
-    Pass("removeGlobl", removeGlobl),
+    //Pass("removeGlobl", removeGlobl),
     Pass("simplifyData", simplifyData),
 //    Pass("removeUnusedLabels", removeUnusedLabels),
     Pass("renameRegisters", renameRegisters),

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 SCRIPTS_DIR="$(dirname "$(realpath "$0")")"
-LAUNCH_DIR="$(pwd)"
 
 JAR_FILE="riscv2rars.jar"
 (
