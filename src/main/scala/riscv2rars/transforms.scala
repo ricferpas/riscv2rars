@@ -209,6 +209,8 @@ object transforms {
               it.next() // consume head
             case _ => ret += stmt
           }
+
+        case Instruction("lla", operands) => ret += Instruction("la", operands)
         case _ => ret += stmt
       }
     }
