@@ -282,7 +282,8 @@ object transforms {
     }
     Program(prg.statements map {
       case Directive("4byte", ops) => Directive("word", ops map removeParenthesis)
-      case Directive("asciz", ops) => Directive("asciiz", ops)
+      case Directive("asciz", ops) => Directive("string", ops)
+      case Directive("asciiz", ops) => Directive("string", ops)
       case Directive("zero", Seq(IntegerConst(n,nb))) => Directive("space", Seq(IntegerConst(n,nb)))
       case Directive("set", Seq(LabelRef(l), ArithExpression("+", LabelRef("."), IntegerConst(0, _)))) => Label(l)
       case Directive("section", LabelRef(".text.startup") :: _) => Directive("text", Seq())
@@ -292,7 +293,7 @@ object transforms {
 
   def fixStrings(prg: Program) = {
     Program(prg.statements map {
-      case Directive("asciiz", strings) => Directive("asciiz", strings map {
+      case Directive("string", strings) => Directive("string", strings map {
         case StringConst(s) => StringConst {
           val sb = new StringBuilder()
           val it = s.iterator.buffered
@@ -400,14 +401,14 @@ object transforms {
     Program(prg.statements ++ runtime.statements)
   }
 
-  def asciizSpaceDirective(prg: Program) = {
+  def stringSpaceDirective(prg: Program) = {
     val re = "(.+\u0000+)".r
     Program(prg.statements flatMap {
-      case Directive("asciiz", Seq(StringConst(re(s)))) =>
+      case Directive("string", Seq(StringConst(re(s)))) =>
         val bytes = s.getBytes("UTF-8")
         val numZeros = bytes.length - bytes.lastIndexWhere(_ != 0) - 1 // no contar el \0 final, ya incluido al usar asciiz
-        if (numZeros > 30) Seq(Directive("asciiz", Seq(StringConst(new String(bytes, 0, bytes.length - numZeros, "UTF-8")))), Directive("space", Seq(IntegerConst(numZeros, 10))))
-        else Seq(Directive("asciiz", Seq(StringConst(s))))
+        if (numZeros > 30) Seq(Directive("string", Seq(StringConst(new String(bytes, 0, bytes.length - numZeros, "UTF-8")))), Directive("space", Seq(IntegerConst(numZeros, 10))))
+        else Seq(Directive("string", Seq(StringConst(s))))
       case s => Seq(s)
     })
   }

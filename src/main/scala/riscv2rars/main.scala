@@ -15,7 +15,7 @@ object passes {
     Pass("removeDirectives", removeDirectives(_)),
     //Pass("removeGlobl", removeGlobl),
     Pass("simplifyData", simplifyData),
-//    Pass("removeUnusedLabels", removeUnusedLabels),
+    Pass("removeUnusedLabels", removeUnusedLabels),
     Pass("renameRegisters", renameRegisters),
     Pass("groupSections", groupSections),
     Pass("removeAlignFromText", removeAlignFromText),
@@ -25,7 +25,7 @@ object passes {
     //Pass("addComplexPseudoinstructions", addComplexPseudoinstructions),
     Pass("fixStrings", fixStrings),
     Pass("renameLabels", renameLabels),
-    Pass("asciizSpaceDirective", asciizSpaceDirective),
+    Pass("asciizSpaceDirective", stringSpaceDirective),
     Pass("addEmptyLines", addEmptyLines),
     //Pass("DCE", DCE),
     Pass("addSourceComments", addSourceComments)
