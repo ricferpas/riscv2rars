@@ -17,13 +17,15 @@ object ast {
     }
   }
   object Program {
-    def fromReader(r: java.io.Reader) = {
+    def apply(stmts: IterableOnce[Statement]): Program = this(stmts.iterator.toSeq)
+
+    def fromReader(r: java.io.Reader): Program = {
       parser.parseAll(parser.program, r) match {
         case parser.Success(prog, _) => prog
         case x                       => sys.error(x.toString)
       }
     }
-    def fromFile(file: String) = {
+    def fromFile(file: String): Program = {
       val f = new java.io.FileReader(file)
       try fromReader(f)
       finally f.close()

@@ -71,7 +71,7 @@ $v0 contains address of allocated memory
 exit (terminate execution)
 10
 */
-void rars_exit(int exitcode);
+void exit(int exitcode);
 
 /*
 print character

@@ -80,7 +80,7 @@ object transforms {
         ret += s
       }
     }
-    Program(ret.toSeq)
+    Program(ret)
   }
 
   def simplifyData(prg: Program) = {
@@ -102,7 +102,7 @@ object transforms {
       ret += Directive("data", Seq())
       ret ++= new_data
     }
-    Program(ret.toSeq)
+    Program(ret)
   }
 
   def removeUnusedLabels(prg: Program) = {
@@ -140,17 +140,17 @@ object transforms {
       }
     }
     setCurrent(current)
-    prg.statements foreach {
+    prg.statements.foreach {
       case d @ Directive(s, _) if sectionChangingDirectives contains s => setCurrent(d)
       case stm => sections(current) += stm
     }
-    val statements = order flatMap { d =>
+    val statements = order.flatMap { d =>
       sections.get(d) match {
         case Some(stms) if stms.nonEmpty => d +: stms
         case _                           => Seq()
       }
     }
-    Program(statements.toSeq)
+    Program(statements)
   }
 
   def removeAlignFromText(prg: Program) = {
@@ -170,7 +170,7 @@ object transforms {
       case stm =>
         statements += stm
     }
-    Program(statements.toSeq)
+    Program(statements)
   }
 
   def addAddressPseudoinstructions(prg: Program) = {
@@ -214,7 +214,7 @@ object transforms {
         case _ => ret += stmt
       }
     }
-    Program(ret.toSeq)
+    Program(ret)
   }
 
   def addSimplePseudoinstructions(prg: Program) = {
@@ -242,10 +242,10 @@ object transforms {
     }
   }
   def Pseudo(p: String): Pseudo = {
-    val Seq(i1p, i2p, replp) = p.split(",", 3).toSeq
-    val Seq(i1n, i1a) = i1p.split(" ", 2).toSeq
-    val Seq(i2n, i2a) = i2p.split(" ", 2).toSeq
-    val Seq(repln, repla) = replp.split(" ", 2).toSeq
+    val Array(i1p, i2p, replp) = p.split(",", 3)
+    val Array(i1n, i1a) = i1p.split(" ", 2)
+    val Array(i2n, i2a) = i2p.split(" ", 2)
+    val Array(repln, repla) = replp.split(" ", 2)
     Pseudo(i1n, i1a.split(" ").toSeq, i2n, i2a.split(" ").toSeq, repln, repla.split(" ").toSeq)
   }
   val pseudos = Set("slti t a b, bnez t l, blt a b l").map(Pseudo)
@@ -266,7 +266,7 @@ object transforms {
         case s => s
       })
     }
-    Program(ret.toSeq)
+    Program(ret)
   }
 
   def simplyfyOperands(prg: Program) = mapOperands(prg) { // TODO (mips)
@@ -391,7 +391,7 @@ object transforms {
         stmts += s
     }
     stmts ++= currentGroup
-    Program(stmts.toSeq)
+    Program(stmts)
   }
 
   def addRuntime(prg: Program) = {
@@ -496,7 +496,7 @@ object transforms {
       else debug.p("DCE descartada " + s)
       it = it.tail
     }
-    Program(ret.toSeq)
+    Program(ret)
   }
 
   def warning(e: String): Unit = {
@@ -537,6 +537,6 @@ object transforms {
           }
       }
     }
-    Program(ret.toSeq)
+    Program(ret)
   }
 }

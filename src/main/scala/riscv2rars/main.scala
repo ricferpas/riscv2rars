@@ -52,7 +52,7 @@ object Main extends App {
   val re_output_file = "--output=(.+)".r
   val re_disable_pass = "--disable-pass=(.+)".r
   val re_any_option = "--(.+)".r
-  args.toSeq.foreach {
+  args.foreach {
     case "--list-passes" =>
       allPasses foreach { p => println(p.name) }
       sys.exit(0)
@@ -98,8 +98,7 @@ object Main extends App {
   }
   try Console.withOut(out) {
     println(printer.format(result))
-  }
-  finally outputFile match {
+  } finally outputFile match {
     case Some(_) => out.close()
     case None =>
   }

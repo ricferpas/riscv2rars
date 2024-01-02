@@ -91,9 +91,9 @@ void clear_screen(void) {
   print_string("\x1b\x5b\x30\x3b\x30\x66");  
 }
 
-void rars_exit(int exitcode) {
-  exit(exitcode);
-}
+//void exit(int exitcode) {
+//  exit(exitcode);
+//}
 
 /* ignora el id */
 int random_int(int id) {
