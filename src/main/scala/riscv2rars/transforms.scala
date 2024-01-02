@@ -364,7 +364,7 @@ object transforms {
     val procedures = {
       var ps = Set("main")
       prg.statements foreach {
-        case Instruction("jal", Seq(LabelRef(l))) => ps += l // FIXME: mips
+        case Instruction("jal", Seq(LabelRef(l))) => ps += l
         case Instruction("call", Seq(LabelRef(l))) => ps += l
         case _                                    =>
       }
