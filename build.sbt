@@ -9,7 +9,7 @@ name := "riscv2rars"
 
 version := "0.1-SNAPSHOT"
 
-scalaVersion := "2.13.10"
+scalaVersion := "2.13.14"
 
 scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
 
