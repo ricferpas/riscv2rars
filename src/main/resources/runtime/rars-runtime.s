@@ -73,11 +73,13 @@ random_int_range:
         li      a7, 42
         ecall
         ret
-        
+
+       	.eqv    KEYBOARD_0_BASE, 0xffff0000 # Comentar esta línea para ensamblar en RIPES
+
         .globl	keyio_poll_key
 keyio_poll_key:
         li      a0, 0
-        li      t0, 0xffff0000
+       	li      t0, KEYBOARD_0_BASE
         lb      a1, 0(t0)                   # carga registro de control del receptor
         andi    a2, a1, 0x00000001          # mira el bit 0
         beqz    a2, keyio_poll_key_return   # si no hay nada disponible devuelve 0.
