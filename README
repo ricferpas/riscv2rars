@@ -1,0 +1,17 @@
+Riscv2rars
+
+    La idea de este programa es coger el código RISC-V generado por un
+compilador normal y corriente y generar un programa
+legible y ejecutable por Rars.
+
+    Este programa está escrito en Scala. Para compilarlo, es
+suficiente con tener instalado el programa “sbt” (versión 1.11.2 o
+posterior), el cual se puede obtener de los repositorios de cualquier
+distribución o de http://www.scala-sbt.org/.
+
+    Hay un Makefile para compilar. También hay un script «riscv2rars»
+que permite ejecutar el programa compilándolo previamente si es necesario, si están instalados Java y sbt.
+
+Notas sobre el compilador de C:
+
+Se ha probado con un GCC configurado como compilador cruzado para RISC-V (con un binario llamado riscv64-unknown-linux-gnu-gcc que soporte -march=rv32imfd -mabi=ilp32). Se puede obtener dicho compilador de diferentes maneras (por ejemplo de https://github.com/riscv-collab/riscv-gnu-toolchain usando «./configure --prefix=…  --enable-multilib» y «make linux»).
