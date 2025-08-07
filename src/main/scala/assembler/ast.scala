@@ -57,7 +57,7 @@ object ast {
       case _ => ??? // Not implemented yet
     }
     def inputOperands: Seq[Operand] = this match {
-      case Instruction(inst, ops) if Set("jal", "jalr")(inst) => ops ++ Seq("a0", "a1", "a2", "a3", "f12", "f13", "f14", "f15").map(Register(_))
+      case Instruction(inst, ops) if Set("jal", "jalr")(inst) => ops ++ Seq("a0", "a1", "a2", "a3", "f12", "f13", "f14", "f15").map(Register)
       case Instruction(inst, ops) if Set("j", "b", "jr", "beq", "beqz", "bne", "bnez", "bltz", "ble", "blez", "bge", "bgez", "blt")(inst) => ops
       case Instruction(inst, Seq(i, IndexedAddress(offset, base))) if Set("sw", "sh", "sb", "swc1")(inst) => Seq(i, offset, base)
       case Instruction(inst, Seq(_, IndexedAddress(offset, base))) if Set("lw", "lh", "lb", "lhu", "lbu")(inst) => Seq(offset, base)

@@ -12,6 +12,9 @@ object parser extends RegexParsers {
   def identifier: Parser[String] =
     """(\p{javaJavaIdentifierStart}|[.@])(\p{javaJavaIdentifierPart}|[.@])*""".r
 
+  def hugeHexNumber =
+    """0x[\da-zA-Z]{16,}""".r ^^ { s => StringConst(s) } // Treat hexadecimal constant too large to fit in a signed Long as strings. They are hashes in some directives that are discarded anyway
+
   def number =
     integer | real | character
 
@@ -43,9 +46,11 @@ object parser extends RegexParsers {
       s.charAt(1) match {
         case 'n' => '\n'
         case 't' => '\t'
+        case 'r' => '\r'
         case '"' => '\"'
         case '\\' => '\\'
-        case _   => sys.error("carácter " + s)
+        case 'b' => '\b'
+        case _   => sys.error("carácter de escape desconocido \\" + s)
       }
     }
   } | {
@@ -95,7 +100,7 @@ object parser extends RegexParsers {
   def operand = addressRef | expression
 
   def value: Parser[Operand] =
-    number | register | labelRef | string | assemblerFunction
+    hugeHexNumber | number | register | labelRef | string | assemblerFunction
 
   def labelRef = identifier ^^ { LabelRef }
 

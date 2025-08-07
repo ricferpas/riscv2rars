@@ -1,5 +1,5 @@
 /*
-  Librería para emular las llamadas al sistema ofrecidas por RARS (y SPIM)
+  Librería para emular las llamadas al sistema ofrecidas por RARS
  */
 
 #ifndef RARSRUNTIME_H_
@@ -157,10 +157,16 @@ $a0 contains pseudorandom, uniformly distributed int value in the range 0 = [int
 */
 int random_int_range(int id, int max);
 
-//void *memcpy(void *dest, const void *src, size_t n);
+
+/* Necesario para size_t */
+#include <stddef.h>
 
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
+
+/* Definidas en rars-runtime.s */
+void *memcpy(void *restrict dest, const void *restrict src, size_t n);
+void *memset(void *s, int c, size_t n);
 
 #endif /* RARSRUNTIME_H_ */
