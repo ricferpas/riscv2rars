@@ -368,6 +368,7 @@ object transforms {
       prg.statements foreach {
         case Instruction("jal", Seq(LabelRef(l))) => ps += l
         case Instruction("call", Seq(LabelRef(l))) => ps += l
+        case Instruction("tail", Seq(LabelRef(l))) => ps += l
         case _                                    =>
       }
       ps
