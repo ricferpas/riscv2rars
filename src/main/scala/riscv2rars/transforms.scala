@@ -51,10 +51,10 @@ object transforms {
     "set", "mask", "fmask", "frame", "cfi_sections", "cfi_startproc", "cfi_endproc", "cfi_def_cfa_offset", "cfi_offset",
     "ent", "type", "end", "previous", "size", "local", "ident", "file", "option", "loc", "cfi_restore", "cfi_remember_state",
     "cfi_restore_state", "attribute")): Program =
-    Program(prg.statements.filter(s => s match {
+    Program(prg.statements.filter {
       case Directive(d, _) if directives contains d => false
       case _ => true
-    }))
+    })
 
   def removeGlobl(prg: Program) = Program(prg.statements filter {
     case Directive("globl", Seq(LabelRef("main"))) => true
@@ -63,7 +63,7 @@ object transforms {
   })
 
   def removeComments(prg: Program) =
-    Program(prg.statements filter { s => s match { case Comment(_, _) => false case _ => true } })
+    Program(prg.statements filter { case Comment(_, _) => false case _ => true })
 
   def removeSections(prg: Program, sections: Set[String] = Set(
     ".debug_info", ".mdebug.abi32", ".debug_abbrev", ".debug_aranges", ".debug_macinfo", ".debug_line", ".debug_loc",
