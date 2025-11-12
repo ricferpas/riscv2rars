@@ -92,11 +92,13 @@ object transforms {
         rest match {
           case IntegerConst(align, albase) :: _ =>
             new_data += Directive("align", Seq(IntegerConst(align match { case 1 => 0 case 2 => 1 case 3 => 2 case 4 => 2 case _ => 3 }, albase)))
-          case _                        =>
+          case _ =>
         }
         new_data += Directive("space", Seq(size))
-      case Directive("section", LabelRef(s) :: _) if s matches """\..{0,3}data.*"""        => ret += Directive("data", Seq())
-      case s                                                                               => ret += s
+      case Directive("section", LabelRef(s) :: _) if s matches """\..{0,3}data.*""" => ret += Directive("data", Seq())
+      case Directive("section", LabelRef(".sbss") :: _) => ret += Directive("data", Seq())
+      case Directive("bss", _) => ret += Directive("data", Seq())
+      case s => ret += s
     }
     if (new_data.nonEmpty) {
       ret += Directive("data", Seq())
