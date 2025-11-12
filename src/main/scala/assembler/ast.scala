@@ -33,15 +33,15 @@ object ast {
   }
 
   sealed abstract class Statement {
-    def isJump = this match {
+    def isJump = this match { // TODO: mips to riscv
       case Instruction(op, _) if Set("beq", "bne", "j", "jr", "jal", "jalr", "bltz", "beqz", "bc1f", "bgez", "bgezal", "bgtz", "blez", "bltzal", "b", "beqz", "bge", "bgeu", "bgt", "bgtu", "ble", "bleu", "blt", "bltu", "bnez") contains op => true
       case _ => false
     }
-    def isNop = this match {
+    def isNop = this match { // TODO: mips to riscv
       case Instruction("nop", _) => true
       case _                     => false
     }
-    def outputOperands: Seq[Operand] = this match {
+    def outputOperands: Seq[Operand] = this match { // TODO: mips to riscv
       case Instruction(inst, _) if Set("jal", "jalr")(inst) => Seq(Register("v0"), Register("v1"), Register("ra"))
       case Instruction(inst, _) if Set("j", "b", "jr", "beq", "beqz", "bne", "bnez", "bltz", "ble", "blez", "bge", "bgez", "blt")(inst) => Seq.empty
       case Instruction(inst, Seq(_, o)) if Set("sw", "sh", "sb", "swc1", "mtc1", "sdc1")(inst) => Seq(o)
@@ -56,7 +56,7 @@ object ast {
       case EmptyLine => Seq.empty
       case _ => ??? // Not implemented yet
     }
-    def inputOperands: Seq[Operand] = this match {
+    def inputOperands: Seq[Operand] = this match { // TODO: mips to riscv
       case Instruction(inst, ops) if Set("jal", "jalr")(inst) => ops ++ Seq("a0", "a1", "a2", "a3", "f12", "f13", "f14", "f15").map(Register)
       case Instruction(inst, ops) if Set("j", "b", "jr", "beq", "beqz", "bne", "bnez", "bltz", "ble", "blez", "bge", "bgez", "blt")(inst) => ops
       case Instruction(inst, Seq(i, IndexedAddress(offset, base))) if Set("sw", "sh", "sb", "swc1")(inst) => Seq(i, offset, base)
