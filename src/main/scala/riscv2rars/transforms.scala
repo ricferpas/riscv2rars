@@ -293,29 +293,42 @@ object transforms {
     })
   }
 
-  def fixStrings(prg: Program) = {
+  def fixStrings(prg: Program): Program = {
+    def bytesUTF8toString(s:String):String = {
+      val sb = new StringBuilder()
+      val it = s.iterator.buffered
+      while (it.hasNext) {
+        sb += (it.next().toInt match {
+          case c if (c & 0x80) != 0 =>
+            var r = c & 0x1f
+            def h = it.head.toInt
+            while (it.hasNext && ((h & 0xc0) == 0x80)) {
+              r = (r << 6) | (0x3f & h)
+              it.next()
+            }
+            r.toChar
+          case c => c.toChar
+        })
+      }
+      sb.result()
+    }
     Program(prg.statements map {
       case Directive("string", strings) => Directive("string", strings map {
-        case StringConst(s) => StringConst {
-          val sb = new StringBuilder()
-          val it = s.iterator.buffered
-          while (it.hasNext) {
-            sb += (it.next().toInt match {
-              case c if (c & 0x80) != 0 =>
-                var r = c & 0x1f
-                def h = it.head.toInt
-                while (it.hasNext && ((h & 0xc0) == 0x80)) {
-                  r = (r << 6) | (0x3f & h)
-                  it.next()
-                }
-                r.toChar
-              case c => c.toChar
-            })
-          }
-          sb.result()
-        }
+        case StringConst(s) => StringConst(bytesUTF8toString(s))
         case op => op
-      })
+      }) // TODO: ascii and acsciz shold be treated likewise
+      case Directive("base64", strings) =>
+        val ts = strings map {
+          case StringConst(s) => StringConst(new String(java.util.Base64.getDecoder.decode(s), "UTF-8"))
+          case op => op
+        }
+        if (ts.forall { case StringConst(s) if s.nonEmpty && s.last == '\u0000' => true case _ => false })
+          Directive("string", ts map {
+            case StringConst(s) => StringConst(s.dropRight(1))
+            case op => op
+          })
+        else
+          Directive("ascii", ts)
       case stm => stm
     })
   }
