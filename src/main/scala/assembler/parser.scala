@@ -58,7 +58,7 @@ object parser extends RegexParsers {
   }
 
   val character =
-    "\'" ~> character_except('\'') <~ "\'" ^^ { CharConst }
+    "\'" ~> character_except('\'') <~ "\'" ^^ { CharConst.apply }
 
   val string =
     "\"" ~> rep(character_except('\"')) <~ "\"" ^^ { s => StringConst(s.mkString) }
@@ -71,9 +71,9 @@ object parser extends RegexParsers {
   } | {
     opt(label) ~ opt(statement) ~ opt(comment) ^^ {
       case olabel ~ ostmt ~ None =>
-        (olabel map { Label }).toSeq ++ ostmt.toSeq
+        (olabel map { Label.apply }).toSeq ++ ostmt.toSeq
       case olabel ~ Some(stmt) ~ Some(c) =>
-        (olabel map { Label }).toSeq :+ stmt :+ Comment(c, attached = true)
+        (olabel map { Label.apply }).toSeq :+ stmt :+ Comment(c, attached = true)
       case Some(label) ~ None ~ Some(c) =>
         Seq(Label(label), Comment(c, attached = true))
       case None ~ None ~ Some(c) =>
@@ -102,7 +102,7 @@ object parser extends RegexParsers {
   def value: Parser[Operand] =
     hugeHexNumber | number | register | labelRef | string | assemblerFunction
 
-  def labelRef = identifier ^^ { LabelRef }
+  def labelRef = identifier ^^ { LabelRef.apply }
 
   def addressRef = expression ~ "(" ~ expression ~ ")" ^^ { case offset ~ _ ~ register ~ _ => IndexedAddress(offset, register) }
 
