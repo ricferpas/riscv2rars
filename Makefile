@@ -2,12 +2,13 @@
 default: riscv2rars.jar
 
 SOURCES=$(shell find -L src/ -type f)
+TARGET_JAR=target/scala-3.7.4/riscv2rars-assembly-0.1-SNAPSHOT.jar
 
-target/scala-2.13/riscv2rars-assembly-0.1-SNAPSHOT.jar: ${SOURCES} build.sbt project/build.properties project/plugins.sbt
+$(TARGET_JAR): ${SOURCES} build.sbt project/build.properties project/plugins.sbt
 	rm -f $@
 	sbt assembly
 
-riscv2rars.jar: target/scala-2.13/riscv2rars-assembly-0.1-SNAPSHOT.jar
+riscv2rars.jar: $(TARGET_JAR)
 	ln -sf $^ $@
 
 clean:

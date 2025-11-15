@@ -32,7 +32,7 @@ object passes {
   )
 }
 
-object Main extends App {
+@main def main(args: String*): Unit = {
   var outputFile: Option[String] = None
   var inputFile: Option[String] = None
   var debugPassesPrefix: Option[String] = None
@@ -43,7 +43,7 @@ object Main extends App {
   }
   var disabledPasses = Set.empty[String]
 
-  private def error(e: String): Unit = {
+  def error(e: String): Unit = {
     Console.withOut(Console.err) { println(e) }
     sys.exit(1)
   }

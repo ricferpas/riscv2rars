@@ -256,7 +256,7 @@ object transforms {
     var producers = Map.empty[String, Statement].withDefaultValue(EmptyLine)
     val ret = mutable.Buffer.empty[Statement]
     prg.statements foreach { s =>
-      for (Register(r) <- s.outputOperands) producers += r -> s
+      for (case Register(r) <- s.outputOperands) producers += r -> s
       ret += (s match {
         case Label(_) =>
           producers = producers.empty; s

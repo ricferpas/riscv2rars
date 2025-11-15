@@ -9,9 +9,9 @@ name := "riscv2rars"
 
 version := "0.1-SNAPSHOT"
 
-scalaVersion := "2.13.17"
+scalaVersion := "3.7.4"
 
-scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Xsource:3")
+scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
 
 Compile / doc / scalacOptions ++= Opts.doc.title("Riscv2Rars") ++ Seq("-diagrams")
 
