@@ -95,7 +95,7 @@ object transforms {
           case _ =>
         }
         new_data += Directive("space", Seq(size))
-      case Directive("section", LabelRef(s) :: _) if s matches """\..{0,3}data.*""" => ret += Directive("data", Seq())
+      case Directive("section", LabelRef(s) :: _) if s.matches("""\..{0,3}data.*""") => ret += Directive("data", Seq())
       case Directive("section", LabelRef(".sbss") :: _) => ret += Directive("data", Seq())
       case Directive("bss", _) => ret += Directive("data", Seq())
       case s => ret += s
@@ -349,13 +349,13 @@ object transforms {
     var subs = Map.empty[String, String]
     def rename(l: String) = subs.getOrElse(l, {
       var sub =
-        if (l matches """\.str.*""") {
+        if (l.matches("""\.str.*""")) {
           indexedName("str")
-        } else if (l matches """JTI.*""") {
+        } else if (l.matches("""JTI.*""")) {
           indexedName("jump_table")
-        } else if (l matches """\.L[0-9]+""") {
+        } else if (l.matches("""\.L[0-9]+""")) {
           indexedName("L")
-        } else if (l matches """\.LC[0-9]+""") {
+        } else if (l.matches("""\.LC[0-9]+""")) {
           indexedName("LC")
         } else l
       while ((usedLabels contains sub) && (sub != l)) sub = sub + "X"
