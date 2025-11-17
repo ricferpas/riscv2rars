@@ -3,19 +3,7 @@ package assembler
 import scala.annotation.tailrec
 
 object ast {
-  case class Program(statements: Seq[Statement]) {
-    def findLabel(label: String): LazyList[Statement] = {
-      @tailrec
-      def loop(it: LazyList[Statement]): LazyList[Statement] = {
-        if (it.isEmpty) it
-        else it.head match {
-          case Label(l) if l == label => it
-          case _                      => loop(it.tail)
-        }
-      }
-      loop(statements.to(LazyList))
-    }
-  }
+  case class Program(statements: Seq[Statement])
   object Program {
     def apply(stmts: IterableOnce[Statement]): Program = this(stmts.iterator.toSeq)
 

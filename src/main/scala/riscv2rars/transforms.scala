@@ -127,10 +127,9 @@ object transforms {
       case o              => o
     }
   }
-
-  val sectionChangingDirectives = Set("data", "text", "section", "bss", "kdata", "ktext", "kbss", "sdata", "sbss")
-
+  
   def groupSections(prg: Program): Program = {
+    val sectionChangingDirectives = Set("data", "text", "section", "bss", "kdata", "ktext", "kbss", "sdata", "sbss")
     var sections = Map.empty[Directive, mutable.Buffer[Statement]]
     val order = mutable.Buffer(Directive("data", Seq()), Directive("text", Seq()), Directive("kdata", Seq()), Directive("ktext", Seq()))
     var current = Directive("text", Seq())
@@ -408,7 +407,7 @@ object transforms {
 
   //def DCE(prg: Program) =  // TODO: mips
 
-  def warning(e: String): Unit = {
+  private def warning(e: String): Unit = {
     Console.withOut(Console.err) { println(e) }
   }
 

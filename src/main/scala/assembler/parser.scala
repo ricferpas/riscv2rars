@@ -4,17 +4,17 @@ import ast._
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 
-object parser extends RegexParsers {
+private object parser extends RegexParsers {
   def program: Parser[Program] = repsep(line, lineBreak) ^^ { l => Program(l.reduce(_ ++ _)) }
-  def lineBreak = """\n|\r|\r\n""".r
+  val lineBreak = """\n|\r|\r\n""".r
   override val whiteSpace = """[ \t\x0B\f]+""".r
 
   val identifierStarRegEx = """\p{Alpha}|[.@$_]"""
   val identifierPartRegEx = """\p{Alnum}|[.@$_]"""
-  def identifier: Parser[String] =
+  val identifier: Parser[String] =
     s"""($identifierStarRegEx)($identifierPartRegEx)*""".r
 
-  def hugeHexNumber =
+  val hugeHexNumber =
     """0x[\da-zA-Z]{16,}""".r ^^ { s => StringConst(s) } // Treat hexadecimal constant too large to fit in a signed Long as strings. They are hashes in some directives that are discarded anyway
 
   def number =

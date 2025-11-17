@@ -4,9 +4,7 @@ import ast._
 
 object printer {
 
-  def error(msg: Any): Nothing = sys.error(msg.toString)
-
-  def indent = "\t"
+  private val indent = "\t"
 
   def format(prg: Program): String = {
     val sb = new StringBuilder
