@@ -9,8 +9,10 @@ object parser extends RegexParsers {
   def lineBreak = """\n|\r|\r\n""".r
   override val whiteSpace = """[ \t\x0B\f]+""".r
 
+  val identifierStarRegEx = """\p{Alpha}|[.@$_]"""
+  val identifierPartRegEx = """\p{Alnum}|[.@$_]"""
   def identifier: Parser[String] =
-    """(\p{javaJavaIdentifierStart}|[.@])(\p{javaJavaIdentifierPart}|[.@])*""".r
+    s"""($identifierStarRegEx)($identifierPartRegEx)*""".r
 
   def hugeHexNumber =
     """0x[\da-zA-Z]{16,}""".r ^^ { s => StringConst(s) } // Treat hexadecimal constant too large to fit in a signed Long as strings. They are hashes in some directives that are discarded anyway
@@ -89,7 +91,7 @@ object parser extends RegexParsers {
     directive | instruction
 
   def directiveIdentifier: Parser[String] =
-    """(\p{javaJavaIdentifierPart}|[.@])(\p{javaJavaIdentifierPart}|[.@])*""".r
+    s"""($identifierPartRegEx)($identifierPartRegEx)*""".r
 
   def directive =
     "." ~ directiveIdentifier ~ repsep(operand, opt(",")) ^^ { case _ ~ name ~ operands => Directive(name, operands) }

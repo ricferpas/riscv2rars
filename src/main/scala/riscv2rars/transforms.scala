@@ -10,7 +10,7 @@ import scala.util.Using
 object transforms {
   type Transform = Program => Program
 
-  def mapOperands(prg: Program)(fn: Operand => Operand) = {
+  private def mapOperands(prg: Program)(fn: Operand => Operand): Program = {
     def recurse(o: Operand): Operand = o match {
       case Register(_)                   => fn(o)
       case LabelRef(_)                   => fn(o)
@@ -27,7 +27,7 @@ object transforms {
     })
   }
 
-  def foreachOperand(prg: Program)(fn: Operand => Unit) = {
+  private def foreachOperand(prg: Program)(fn: Operand => Unit): Unit = {
     def recurse(o: Operand): Unit = o match {
       case Register(_) => fn(o)
       case LabelRef(_) => fn(o)
@@ -83,7 +83,7 @@ object transforms {
     Program(ret)
   }
 
-  def simplifyData(prg: Program) = {
+  def simplifyData(prg: Program): Program = {
     val ret = mutable.Buffer.empty[Statement]
     val new_data = mutable.Buffer.empty[Statement]
     prg.statements foreach {
@@ -107,7 +107,7 @@ object transforms {
     Program(ret)
   }
 
-  def removeUnusedLabels(prg: Program) = {
+  def removeUnusedLabels(prg: Program): Program = {
     var usedLabels = Set[String]()
     foreachOperand(prg) {
       case LabelRef(l) => usedLabels += l
@@ -120,7 +120,7 @@ object transforms {
     })
   }
 
-  def renameRegisters(prg: Program) = {
+  def renameRegisters(prg: Program): Program = {
     def renameReg(reg: String) = reg // TODO
     mapOperands(prg) {
       case Register(name) => Register(renameReg(name))
@@ -155,10 +155,10 @@ object transforms {
     Program(statements)
   }
 
-  def removeAlignFromText(prg: Program) = {
+  def removeAlignFromText(prg: Program): Program = {
     val textDirective = Directive("text", Seq())
     var current = textDirective
-    def setCurrent(d: Directive) = {
+    def setCurrent(d: Directive): Unit = {
       current = d
     }
     setCurrent(current)
@@ -175,7 +175,7 @@ object transforms {
     Program(statements)
   }
 
-  def addAddressPseudoinstructions(prg: Program) = {
+  def addAddressPseudoinstructions(prg: Program): Program = {
     val it = prg.statements.iterator.buffered
     val ret = mutable.Buffer.empty[Statement]
     /* El siguiente mapa es necesario porque a veces se reusa un registro después de cargar en el la parte alta de una constante. Además, el  lui y la segunda instrucción pueden no estar contiguos.*/
@@ -219,7 +219,7 @@ object transforms {
     Program(ret)
   }
 
-  def addSimplePseudoinstructions(prg: Program) = {
+  def addSimplePseudoinstructions(prg: Program): Program = {
     Program(prg.statements map {
       case Instruction("addi", Seq(Register(regDst), Register("zero"), IntegerConst(imm, immb))) => Instruction("li", Seq(Register(regDst), IntegerConst(imm, immb)))
       case Instruction("beq", Seq(Register(srcDst), Register("zero"), dest)) => Instruction("beqz", Seq(Register(srcDst), dest))
@@ -229,7 +229,7 @@ object transforms {
     })
   }
 
-  def addComplexPseudoinstructions(prg: Program) = {
+  def addComplexPseudoinstructions(prg: Program): Program = {
     var producers = Map.empty[String, Statement].withDefaultValue(EmptyLine)
     val ret = mutable.Buffer.empty[Statement]
     prg.statements foreach { s =>
@@ -248,13 +248,13 @@ object transforms {
     Program(ret)
   }
 
-  def simplyfyOperands(prg: Program) = mapOperands(prg) { // TODO (mips)
+  def simplifyOperands(prg: Program): Program = mapOperands(prg) { // TODO (mips)
     case IndexedAddress(offset, Register("gp")) => offset
     case AssemblerFunction("gp_rel", o)         => o
     case o                                      => o
   }
 
-  def simplyfyDirectives(prg: Program) = {
+  def simplifyDirectives(prg: Program): Program = {
     def removeParenthesis(o: Operand) = o match {
       case Parenthesis(o) => o
       case o              => o
@@ -310,7 +310,7 @@ object transforms {
     })
   }
 
-  def renameLabels(prg: Program) = {
+  def renameLabels(prg: Program): Program = {
     var indexedNames = Map.empty[String, Int].withDefaultValue(0)
     def indexedName(n: String) = {
       val r = indexedNames(n)
@@ -352,7 +352,7 @@ object transforms {
       }
   }
 
-  def addEmptyLines(prg: Program) = {
+  def addEmptyLines(prg: Program): Program = {
     val procedures = {
       var ps = Set("main")
       prg.statements foreach {
@@ -387,14 +387,14 @@ object transforms {
     Program(stmts)
   }
 
-  def addRuntime(prg: Program) = {
+  def addRuntime(prg: Program): Program = {
     val reader = new java.io.InputStreamReader(getClass.getResourceAsStream("/runtime/rars-runtime.s"))
     val runtime = Program.fromReader(reader)
     reader.close()
     Program(prg.statements ++ runtime.statements)
   }
 
-  def stringSpaceDirective(prg: Program) = {
+  def stringSpaceDirective(prg: Program): Program = {
     val re = "(.+\u0000+)".r
     Program(prg.statements flatMap {
       case Directive("string", Seq(StringConst(re(s)))) =>
@@ -412,7 +412,7 @@ object transforms {
     Console.withOut(Console.err) { println(e) }
   }
 
-  def addSourceComments(prg: Program) = {
+  def addSourceComments(prg: Program): Program = {
     val it = prg.statements.iterator
     val ret = mutable.Buffer[Statement]()
     var curr = Seq.empty[(Int, Int)]

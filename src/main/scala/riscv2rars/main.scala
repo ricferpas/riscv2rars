@@ -9,7 +9,7 @@ object passes {
   case class Pass(name: String, transform: Transform)
   val allPasses = Seq(
     Pass("addRuntime", addRuntime),
-    Pass("simplyfyDirectives", simplyfyDirectives),
+    Pass("simplyfyDirectives", simplifyDirectives),
     Pass("removeSections", removeSections(_)),
     Pass("removeComments", removeComments),
     Pass("removeDirectives", removeDirectives(_)),
