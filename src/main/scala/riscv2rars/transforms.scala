@@ -27,22 +27,22 @@ object transforms {
     })
   }
 
-  private def foreachOperand(prg: Program)(fn: Operand => Unit): Unit = {
-    def recurse(o: Operand): Unit = o match {
-      case Register(_) => fn(o)
-      case LabelRef(_) => fn(o)
-      case l: Literal  => fn(l)
+  private def foreachOperand(prg: Program)(fn: (Statement, Operand) => Unit): Unit = {
+    def recurse(s: Statement, o: Operand): Unit = o match {
+      case Register(_) => fn(s, o)
+      case LabelRef(_) => fn(s, o)
+      case l: Literal  => fn(s, l)
       case IndexedAddress(offset, base) =>
-        recurse(offset); recurse(base); fn(IndexedAddress(offset, base))
+        recurse(s, offset); recurse(s, base); fn(s, o)
       case AssemblerFunction(name, oper) =>
-        recurse(oper); fn(AssemblerFunction(name, oper))
+        recurse(s, oper); fn(s, o)
       case ArithExpression(oper, a, b) =>
-        recurse(a); recurse(b); fn(ArithExpression(oper, a, b))
-      case Parenthesis(op) => recurse(op); fn(Parenthesis(op))
+        recurse(s, a); recurse(s, b); fn(s, o)
+      case Parenthesis(op) => recurse(s, op); fn(s, o)
     }
     prg.statements foreach {
-      case Directive(_, ops)   => ops foreach recurse
-      case Instruction(_, ops) => ops foreach recurse
+      case s@Directive(_, ops)   => ops foreach (recurse(s, _))
+      case s@Instruction(_, ops) => ops foreach (recurse(s, _))
       case _                   =>
     }
   }
@@ -110,7 +110,16 @@ object transforms {
   def removeUnusedLabels(prg: Program): Program = {
     var usedLabels = Set[String]()
     foreachOperand(prg) {
-      case LabelRef(l) => usedLabels += l
+      case (Instruction(_, _), LabelRef(l)) =>
+        usedLabels += l
+      case (Directive("globl", _), LabelRef(l))  =>
+        usedLabels += l
+      case (Directive(d, _), LabelRef(l)) if d == "word" || d == "dword" =>
+        usedLabels += l
+      case (Directive("type", LabelRef(l) :: LabelRef(tipe) :: Nil), _) if tipe == "@function" || tipe == "@object" =>
+        usedLabels += l
+      case (s@Directive(directive, _), LabelRef(l)) =>
+        //println(s"Unused Directive: $s ⇒ $l")
       case _           =>
     }
     Program(prg.statements flatMap {

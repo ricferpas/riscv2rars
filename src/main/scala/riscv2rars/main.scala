@@ -12,8 +12,6 @@ object passes {
     Pass("simplyfyDirectives", simplifyDirectives),
     Pass("removeSections", removeSections(_)),
     Pass("removeComments", removeComments),
-    Pass("removeDirectives", removeDirectives(_)),
-    Pass("removeGlobl", removeGlobl), // maybe make an option
     Pass("simplifyData", simplifyData),
     Pass("removeUnusedLabels", removeUnusedLabels),
     Pass("renameRegisters", renameRegisters),
@@ -28,7 +26,9 @@ object passes {
     Pass("asciizSpaceDirective", stringSpaceDirective),
     Pass("addEmptyLines", addEmptyLines),
     //Pass("DCE", DCE),
-    Pass("addSourceComments", addSourceComments)
+    Pass("addSourceComments", addSourceComments),
+    Pass("removeDirectives", removeDirectives(_)),
+    Pass("removeGlobl", removeGlobl), // maybe make an option
   )
 }
 
