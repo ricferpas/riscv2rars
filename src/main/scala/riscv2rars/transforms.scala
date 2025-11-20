@@ -367,6 +367,7 @@ object transforms {
         case Instruction("jal", Seq(LabelRef(l))) => ps += l
         case Instruction("call", Seq(LabelRef(l))) => ps += l
         case Instruction("tail", Seq(LabelRef(l))) => ps += l
+        case Directive("type", LabelRef(l) :: LabelRef("@function") :: Nil) => ps += l
         case _                                    =>
       }
       ps
